@@ -1,0 +1,48 @@
+name: scan
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Look back this many days (first run / after an outage)"
+        default: ""
+permissions:
+  contents: write
+  issues: write
+concurrency:
+  group: scan
+  cancel-in-progress: false
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q pywebpush
+      - name: Publish the push key for the page
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+        run: |
+          python - <<'PY'
+          import json, os
+          cfg = {"repo": os.environ["GITHUB_REPOSITORY"], "vapid_public": os.environ.get("VAPID_PUBLIC_KEY", "")}
+          open("docs/config.json", "w").write(json.dumps(cfg))
+          PY
+      - name: Scan EDGAR
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scanner/run.py ${{ inputs.days && format('--days {0}', inputs.days) || '' }}
+      - name: Save results
+        run: |
+          git config user.name "insider-scanner"
+          git config user.email "scanner@users.noreply.github.com"
+          git add docs/data docs/config.json
+          git diff --cached --quiet || git commit -qm "scan $(date -u +%FT%H:%MZ)"
+          git pull --rebase -q || true
+          git push -q

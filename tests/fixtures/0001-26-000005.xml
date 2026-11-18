@@ -1,0 +1,8 @@
+<?xml version="1.0"?><ownershipDocument><schemaVersion>X0508</schemaVersion><documentType>4</documentType><periodOfReport>2026-11-16</periodOfReport>
+<issuer><issuerCik>0001000003</issuerCik><issuerName>Tiny Robotics Ltd</issuerName><issuerTradingSymbol>TNYR</issuerTradingSymbol></issuer>
+<reportingOwner><reportingOwnerId><rptOwnerCik>0002000005</rptOwnerCik><rptOwnerName>Westbrook Capital Partners LP</rptOwnerName></reportingOwnerId><reportingOwnerRelationship><isTenPercentOwner>1</isTenPercentOwner></reportingOwnerRelationship></reportingOwner>
+<nonDerivativeTable><nonDerivativeTransaction><securityTitle><value>Common Stock</value></securityTitle><transactionDate><value>2026-11-16</value></transactionDate>
+<transactionCoding><transactionFormType>4</transactionFormType><transactionCode>P</transactionCode><equitySwapInvolved>0</equitySwapInvolved></transactionCoding>
+<transactionAmounts><transactionShares><value>900000</value></transactionShares><transactionPricePerShare><value>1.1</value></transactionPricePerShare><transactionAcquiredDisposedCode><value>A</value></transactionAcquiredDisposedCode></transactionAmounts>
+<postTransactionAmounts><sharesOwnedFollowingTransaction><value>15900000</value></sharesOwnedFollowingTransaction></postTransactionAmounts>
+<ownershipNature><directOrIndirectOwnership><value>I</value></directOrIndirectOwnership></ownershipNature></nonDerivativeTransaction></nonDerivativeTable></ownershipDocument>
