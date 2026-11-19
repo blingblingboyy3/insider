@@ -8,6 +8,7 @@ The SEC asks for a descriptive User-Agent with a contact and no more than ~10 re
 under that.
 """
 import json
+import os
 import re
 import time
 import urllib.parse
@@ -15,7 +16,9 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 
-UA = "Insider/1.0 (personal insider-buying alerts; github.com/insider-app)"
+# The SEC requires every automated caller to identify itself with a name and a contact address, and it answers
+# 403 to anything that doesn't. Set SEC_CONTACT to your email in the repo secrets to use your own.
+UA = os.environ.get("SEC_USER_AGENT") or f"Insider personal insider-buying scanner {os.environ.get('SEC_CONTACT', 'blingblingboyy3@users.noreply.github.com')}"
 SEARCH = "https://efts.sec.gov/LATEST/search-index"
 ARCHIVE = "https://www.sec.gov/Archives/edgar/data"
 CURRENT = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=4&output=atom&count=100&start={start}"
@@ -36,7 +39,8 @@ def get(url, tries=3, timeout=30):
     for i in range(tries):
         _pace()
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Encoding": "gzip, deflate"})
+            req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Encoding": "gzip, deflate", "Accept": "application/json, text/html, */*",
+                                                       "Host": urllib.parse.urlparse(url).netloc})
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 data = r.read()
                 if r.headers.get("Content-Encoding") == "gzip":
