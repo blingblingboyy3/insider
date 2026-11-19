@@ -12,6 +12,7 @@ import os
 import re
 import time
 import urllib.parse
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
@@ -47,6 +48,16 @@ def get(url, tries=3, timeout=30):
                     import gzip
                     data = gzip.decompress(data)
                 return data
+        except urllib.error.HTTPError as e:
+            body = ""
+            try:
+                body = e.read(600).decode("utf-8", "replace").replace("\n", " ")
+            except Exception:  # noqa: BLE001
+                pass
+            last = f"{e} :: {body[:400]}"
+            if e.code in (403, 404):
+                break
+            time.sleep(1.5 * (i + 1))
         except Exception as e:  # noqa: BLE001
             last = e
             time.sleep(1.5 * (i + 1))
