@@ -51,7 +51,11 @@ def get(url, tries=3, timeout=30):
         except urllib.error.HTTPError as e:
             body = ""
             try:
-                body = e.read(600).decode("utf-8", "replace").replace("\n", " ")
+                raw = e.read(4000)
+                if e.headers.get("Content-Encoding") == "gzip":
+                    import gzip
+                    raw = gzip.decompress(raw)
+                body = re.sub(r"<[^>]+>|\s+", " ", raw.decode("utf-8", "replace"))
             except Exception:  # noqa: BLE001
                 pass
             last = f"{e} :: {body[:400]}"
