@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Insider</title>
-<meta name="description" content="Insider buying that matters: clustered open-market purchases by executives, scored and explained.">
+<meta name="description" content="Insider buying and activist stakes that matter, read from SEC filings, scored and explained.">
 <meta name="theme-color" content="#0b0d10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -17,7 +17,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0b0d10;--bg2:#11151a;--bg3:#171c23;--line:#222a33;--line2:#2c3641;--ink:#e8ecf1;--ink2:#9aa6b4;--ink3:#5f6b79;
---up:#3ddc97;--up2:rgba(61,220,151,.14);--strong:#ffb547;--strong2:rgba(255,181,71,.14);--down:#ff6b6b;--blue:#6ea8ff;
+--up:#3ddc97;--up2:rgba(61,220,151,.14);--strong:#ffb547;--strong2:rgba(255,181,71,.14);--down:#ff6b6b;--blue:#6ea8ff;--blue2:rgba(110,168,255,.14);
 --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;--sans:Inter,-apple-system,system-ui,"Segoe UI",sans-serif;--r:14px;
 --pad:16px;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -30,29 +30,34 @@ header h1{font-size:17px;margin:0;letter-spacing:.2px;flex:1}
 header .upd{font:12px var(--mono);color:var(--ink3)}
 main{padding:0 var(--pad) calc(84px + var(--safe-b));max-width:720px;margin:0 auto}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(13,16,20,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
-display:flex;justify-content:space-around;padding:8px 6px calc(8px + var(--safe-b))}
-nav.tabs button{background:none;border:0;color:var(--ink3);font:500 11px var(--sans);display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 10px;border-radius:10px}
+display:flex;justify-content:space-around;padding:8px 4px calc(8px + var(--safe-b))}
+nav.tabs button{background:none;border:0;color:var(--ink3);font:500 10.5px var(--sans);display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 8px;border-radius:10px}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button.on{color:var(--up)}
-.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 16px}
+.what{font-size:13px;color:var(--ink2);line-height:1.5;margin:4px 0 14px;padding:10px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px}
+.what b{color:var(--ink)}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 14px}
 .stat{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 10px 8px}
 .stat .v{font:600 20px/1.1 var(--mono);letter-spacing:-.3px}
 .stat .k{font-size:10.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
 .stat .v.up{color:var(--up)}.stat .v.down{color:var(--down)}.stat .v.strong{color:var(--strong)}
-h2{font-size:12px;letter-spacing:.9px;text-transform:uppercase;color:var(--ink3);margin:18px 0 10px;font-weight:600}
+h2{font-size:12px;letter-spacing:.9px;text-transform:uppercase;color:var(--ink3);margin:18px 0 10px;font-weight:600;display:flex;align-items:center;gap:8px}
 .card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px;position:relative}
 .card.tap:active{background:var(--bg3)}
 .row{display:flex;align-items:center;gap:10px}
 .tk{font:600 18px var(--mono);letter-spacing:-.2px}
 .nm{color:var(--ink2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pill{font:600 10.5px var(--mono);letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid}
+.pill{font:600 10.5px var(--mono);letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid;white-space:nowrap}
 .pill.Strong{color:var(--strong);border-color:rgba(255,181,71,.45);background:var(--strong2)}
 .pill.Notable{color:var(--up);border-color:rgba(61,220,151,.45);background:var(--up2)}
 .pill.Weak{color:var(--ink3);border-color:var(--line2)}
+.kind{font:600 10px var(--mono);letter-spacing:.7px;text-transform:uppercase;padding:3px 7px;border-radius:6px;white-space:nowrap}
+.kind.insider{color:var(--up);background:var(--up2)}
+.kind.stake{color:var(--blue);background:var(--blue2)}
 .ring{width:44px;height:44px;flex:none;position:relative}
 .ring svg{transform:rotate(-90deg)}
 .ring .t{position:absolute;inset:0;display:grid;place-items:center;font:600 13px var(--mono)}
-.lead{margin:10px 0 8px;font-size:14px;color:var(--ink)}
+.lead{margin:10px 0 8px;font-size:14.5px;color:var(--ink);line-height:1.45}
 .facts{display:flex;flex-wrap:wrap;gap:6px 14px;font:12.5px var(--mono);color:var(--ink2)}
 .facts b{color:var(--ink);font-weight:500}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -61,20 +66,22 @@ h2{font-size:12px;letter-spacing:.9px;text-transform:uppercase;color:var(--ink3)
 .spark{width:100%;height:44px;margin-top:10px}
 .perf{display:inline-flex;gap:6px;align-items:baseline;font:12.5px var(--mono)}
 .perf .up{color:var(--up)}.perf .down{color:var(--down)}
-.empty{color:var(--ink3);text-align:center;padding:40px 20px;font-size:14px;line-height:1.6}
+.empty{color:var(--ink3);text-align:center;padding:36px 20px;font-size:14px;line-height:1.6}
 .btn{background:var(--up);color:#06120c;border:0;border-radius:11px;padding:12px 16px;font:600 14px var(--sans);width:100%}
 .btn.ghost{background:var(--bg3);color:var(--ink);border:1px solid var(--line2)}
 .btn:disabled{opacity:.5}
 .hint{font-size:12.5px;color:var(--ink3);line-height:1.5}
 .search{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:10px 12px;color:var(--ink);font:14px var(--sans);outline:0;margin:6px 0 12px}
 .search::placeholder{color:var(--ink3)}
-/* detail */
+.seg{display:flex;gap:6px;margin:4px 0 12px}
+.seg button{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);border-radius:10px;padding:8px;font:500 13px var(--sans)}
+.seg button.on{background:var(--bg3);color:var(--ink);border-color:var(--line2)}
 .detail .back{background:none;border:0;color:var(--blue);font:500 14px var(--sans);padding:6px 0 10px;display:flex;align-items:center;gap:4px}
 .hd{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
 .hd .tk{font-size:30px}
 .hd .nm{white-space:normal;font-size:14px}
 .bars{display:grid;gap:7px;margin:8px 0 4px}
-.bar{display:grid;grid-template-columns:86px 1fr 34px;align-items:center;gap:10px;font-size:12.5px;color:var(--ink2)}
+.bar{display:grid;grid-template-columns:96px 1fr 34px;align-items:center;gap:10px;font-size:12.5px;color:var(--ink2)}
 .bar .tr{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .bar .fl{height:100%;background:var(--up);border-radius:4px}
 .bar .fl.neg{background:var(--down)}
@@ -85,7 +92,7 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{font:600 10.5px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);text-align:left;padding:6px 6px 6px 0;border-bottom:1px solid var(--line)}
 td{padding:8px 6px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
 td.n,th.n{text-align:right;font-family:var(--mono)}
-td .sub{color:var(--ink3);font-size:11.5px}
+td .sub,.sub{color:var(--ink3);font-size:11.5px}
 .kv{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
 .kv div{background:var(--bg3);border-radius:10px;padding:9px 10px}
 .kv .k{font-size:10.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.6px}
@@ -94,14 +101,6 @@ td .sub{color:var(--ink3);font-size:11.5px}
 .take.Notable{border-color:var(--up)}.take.Weak{border-color:var(--ink3)}
 .take b{display:block;margin-bottom:4px;font-size:14px}
 .take p{margin:0;color:var(--ink2);font-size:13.5px;line-height:1.55}
-.nm2{font-weight:600;font-size:15px}
-.sec{font:600 10.5px var(--mono);letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin:14px 0 6px}
-.also{display:grid;grid-template-columns:52px 1fr auto;gap:8px;font-size:12.5px;color:var(--ink2);padding:5px 0;border-bottom:1px solid var(--line)}
-.also span:first-child{font-family:var(--mono);color:var(--ink3)}
-td.note{font-size:11.5px;color:var(--ink3);padding-top:0;line-height:1.4}
-.read{font-size:13.5px;color:var(--ink);line-height:1.5}
-.more{font-size:12.5px;color:var(--blue);margin-top:10px}
-.card.ins{cursor:pointer}
 .disc{font-size:11.5px;color:var(--ink3);margin-top:14px;line-height:1.5}
 .links a{display:inline-block;margin:6px 10px 0 0;font:12.5px var(--mono)}
 .toast{position:fixed;left:50%;bottom:calc(90px + var(--safe-b));transform:translateX(-50%);background:var(--bg3);border:1px solid var(--line2);padding:10px 14px;border-radius:12px;font-size:13px;z-index:9;max-width:90vw}
@@ -113,6 +112,24 @@ td.note{font-size:11.5px;color:var(--ink3);padding-top:0;line-height:1.4}
 .step{display:flex;gap:10px;margin:10px 0;font-size:13.5px;color:var(--ink2)}
 .step i{flex:none;width:22px;height:22px;border-radius:50%;background:var(--bg3);border:1px solid var(--line2);display:grid;place-items:center;font:600 11px var(--mono);color:var(--ink);font-style:normal}
 .ok{color:var(--up)}.warn{color:var(--strong)}
+.nm2{font-weight:600;font-size:15px}
+.sec{font:600 10.5px var(--mono);letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin:14px 0 6px}
+.also{display:grid;grid-template-columns:52px 1fr auto;gap:8px;font-size:12.5px;color:var(--ink2);padding:5px 0;border-bottom:1px solid var(--line)}
+.also span:first-child{font-family:var(--mono);color:var(--ink3)}
+td.note{font-size:11.5px;color:var(--ink3);padding-top:0;line-height:1.4}
+.read{font-size:13.5px;color:var(--ink);line-height:1.5}
+.more{font-size:12.5px;color:var(--blue);margin-top:10px}
+.card.ins{cursor:pointer}
+.q{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--line2);color:var(--ink3);font:600 10px var(--mono);background:none;padding:0;margin-left:4px;vertical-align:middle;cursor:pointer}
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);display:flex;align-items:flex-end}
+.sheet .box{background:var(--bg2);border:1px solid var(--line2);border-radius:18px 18px 0 0;padding:18px var(--pad) calc(22px + var(--safe-b));width:100%;max-width:720px;margin:0 auto;max-height:80vh;overflow:auto}
+.sheet h3{margin:0 0 6px;font-size:16px}
+.sheet p{margin:0;color:var(--ink2);font-size:14px;line-height:1.55}
+.intro h3{font-size:22px;margin:4px 0 10px}
+.intro .row{align-items:flex-start;gap:12px;margin:12px 0;font-size:13.5px;color:var(--ink2);line-height:1.5}
+.intro .row b{color:var(--ink)}
+.intro .kind,.intro .pill{margin-top:3px;flex:none}
+.quote{border-left:2px solid var(--line2);padding:4px 0 4px 10px;color:var(--ink2);font-size:13px;line-height:1.5;margin-top:8px;font-style:italic}
 </style>
 </head>
 <body>
@@ -120,99 +137,146 @@ td.note{font-size:11.5px;color:var(--ink3);padding-top:0;line-height:1.4}
 <main id="main"></main>
 <nav class="tabs">
   <button data-tab="home" class="on"><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</button>
-  <button data-tab="alerts"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 004 0"/></svg>Alerts</button>
+  <button data-tab="insiders"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>Insiders</button>
+  <button data-tab="stakes"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V10l7-6 7 6v11"/><path d="M9 21v-6h6v6"/></svg>Big Money</button>
   <button data-tab="browse"><svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M8 19v-7"/><path d="M12 19V9"/><path d="M16 19v-4"/><path d="M20 19V7"/></svg>Companies</button>
-  <button data-tab="activity"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Activity</button>
   <button data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</button>
 </nav>
 <script>
 const $ = s => document.querySelector(s);
-const D = {summary:null, alerts:[], companies:{}, buys:[], runs:[], config:{}};
+const D = {summary:null, alerts:[], companies:{}, buys:[], runs:[], config:{}, stakes:[]};
 let tab = "home", detail = null;
 const fmt = {
   money(v){ if(v==null) return "—"; const a=Math.abs(v); const u=[["T",1e12],["B",1e9],["M",1e6],["K",1e3]]; for(const [s,d] of u) if(a>=d){ const x=v/d; return "$"+(s==="K"||Math.abs(x)>=100?x.toFixed(0):Math.abs(x)>=10?x.toFixed(1):x.toFixed(2))+s; } return "$"+Math.round(v).toLocaleString(); },
   pct(v,d=0){ return v==null?"—":(v>0?"+":"")+(v*100).toFixed(d)+"%"; },
   px(v){ return v==null?"—":"$"+Number(v).toFixed(2); },
   int(v){ return v==null?"—":Math.round(v).toLocaleString(); },
-  date(s){ if(!s) return "—"; const d=new Date(s+"T00:00:00"); return d.toLocaleDateString(undefined,{month:"short",day:"numeric"}); },
-  ago(iso){ if(!iso) return ""; const m=Math.round((Date.now()-new Date(iso))/60000); return m<2?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)+" d ago"; }
+  date(s){ if(!s) return "—"; const d=new Date(s.slice(0,10)+"T00:00:00"); return d.toLocaleDateString(undefined,{month:"short",day:"numeric"}); },
+  ago(iso){ if(!iso) return ""; const m=Math.round((Date.now()-new Date(iso))/60000); return m<2?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)+" d ago"; },
+  days(s){ return Math.round((Date.now()-new Date(s.slice(0,10)+"T00:00:00"))/86400000); }
 };
 const esc = s => String(s??"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const GLOSSARY = {
+  "form4": ["Form 4", "The form every officer, director and 10%+ owner must file with the SEC within two business days of trading their own company's stock. The Insiders feed is built from these."],
+  "open-market": ["Open-market purchase", "The insider bought shares on the exchange with their own money (SEC code P). This is the only kind of insider trade with a track record of predicting returns — awards, option exercises and tax withholding are excluded."],
+  "cluster": ["Cluster", "Two or more different insiders buying within 30 days of each other. Research finds clusters far more predictive than one insider acting alone."],
+  "10b5-1": ["10b5-1 plan", "A pre-scheduled trading plan set up months in advance. A buy under one happens automatically, so it says little about what the insider thinks today. Marked down."],
+  "indirect": ["Direct vs. indirect", "Direct: held in the insider's own name. Indirect: held through a trust, LLC, spouse or retirement account — still their money, but sometimes a planning move rather than a conviction buy."],
+  "stake": ["Stake grew", "How much this purchase increased what the insider already owned. +150% means they more than doubled their position; +2% is a token top-up."],
+  "13d": ["Schedule 13D", "Filed within days of crossing 5% ownership by a holder who intends to influence the company (a board seat, a sale, buybacks). Activists file these. The passive version, 13G, is for index funds and is left out."],
+  "percent": ["Percent of class", "The share of the company's stock the filer now owns, as stated in the filing."],
+  "purpose": ["Stated purpose", "Item 4 of a 13D: the filer's own words on why they bought. 'Investment purposes' is boilerplate; mentions of the board, strategic alternatives or a sale are the tell."],
+  "labels": ["Strong · Notable · Weak", "Strong (65+) is the pattern with the best track record and the only one that pushes to your phone. Notable (40–64) has some of the ingredients. Weak is logged for context only."],
+  "since": ["Since alert", "How the stock has done from the close on the alert day, next to the S&P 500 over the same days. Judge it after dozens of alerts; single names are noise."],
+  "score": ["Score", "0–100, built from the parts shown in the bars. It ranks signals against each other; it is not a probability."],
+};
+function q(term){ return `<button class="q" onclick="event.stopPropagation();gloss('${term}')">?</button>`; }
+function gloss(term){ const g=GLOSSARY[term]; if(!g) return; sheet(`<h3>${esc(g[0])}</h3><p>${esc(g[1])}</p>`); }
+function sheet(html){ const s=document.createElement("div"); s.className="sheet"; s.innerHTML=`<div class="box">${html}</div>`; s.onclick=e=>{ if(e.target===s) s.remove(); }; document.body.appendChild(s); return s; }
 async function j(name){ try{ const r=await fetch(name+"?t="+Math.floor(Date.now()/60000),{cache:"no-store"}); if(!r.ok) throw 0; return await r.json(); }catch(e){ return null; } }
 async function load(){
-  const [s,a,c,b,r,cfg] = await Promise.all([j("data/summary.json"),j("data/alerts.json"),j("data/companies.json"),j("data/buys.json"),j("data/runs.json"),j("config.json")]);
-  D.summary=s; D.alerts=(a||[]).slice().reverse(); D.companies=c||{}; D.buys=(b||[]).slice().sort((x,y)=>y.trade_date.localeCompare(x.trade_date)); D.runs=r||[]; D.config=cfg||{};
+  const [s,a,c,b,r,cfg,st] = await Promise.all([j("data/summary.json"),j("data/alerts.json"),j("data/companies.json"),j("data/buys.json"),j("data/runs.json"),j("config.json"),j("data/stakes.json")]);
+  D.summary=s; D.alerts=(a||[]).slice().reverse(); D.companies=c||{}; D.buys=(b||[]).slice().sort((x,y)=>y.trade_date.localeCompare(x.trade_date)); D.runs=r||[]; D.config=cfg||{}; D.stakes=(st||[]).slice().reverse();
   $("#upd").textContent = s ? "scan " + fmt.ago(s.updated) : "";
   render();
+  try{ if(!localStorage.getItem("insider.intro")){ intro(); } }catch(e){}
 }
+const isStake = a => a.kind==="13d";
 function ring(score,label){ const r=18,c=2*Math.PI*r,col=label==="Strong"?"var(--strong)":label==="Notable"?"var(--up)":"var(--ink3)";
   return `<div class="ring"><svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="${r}" stroke="var(--bg3)" stroke-width="4" fill="none"/><circle cx="22" cy="22" r="${r}" stroke="${col}" stroke-width="4" fill="none" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-Math.min(score,100)/100)}" stroke-linecap="round"/></svg><div class="t">${score}</div></div>`; }
 function spark(pts, markDate){ if(!pts||pts.length<2) return ""; const w=300,h=44,vals=pts.map(p=>p[1]),mn=Math.min(...vals),mx=Math.max(...vals),sp=(mx-mn)||1;
   const X=i=>(i/(pts.length-1))*w, Y=v=>h-3-((v-mn)/sp)*(h-6); let d=pts.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ");
   const up=vals[vals.length-1]>=vals[0]; let mark=""; if(markDate){ const i=pts.findIndex(p=>p[0]>=markDate); if(i>=0) mark=`<circle cx="${X(i)}" cy="${Y(pts[i][1])}" r="3.2" fill="var(--strong)"/>`; }
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}" fill="none" stroke="${up?"var(--up)":"var(--down)"}" stroke-width="1.6"/>${mark}</svg>`; }
-function alertCard(a){
+function headline(a){
+  if(isStake(a)){ const v=a.stake_value?` (~${fmt.money(a.stake_value)})`:""; return `<b>${esc(a.lead)}</b> ${a.amendment?"raised its stake to":"disclosed a"} <b class="num">${(a.percent||0).toFixed(1)}%</b> ${a.amendment?"of":"stake in"} ${esc(a.name)}${v}${a.kinds?.includes("activist")?" — a known activist":""}.`; }
+  const hb=(a.buyers||[]).filter(b=>!b.fund); const span=a.first_trade&&a.last_trade&&a.first_trade!==a.last_trade?` over ${Math.max(1,Math.round((new Date(a.last_trade)-new Date(a.first_trade))/86400000))} days`:"";
+  const rank={"CEO":0,"CFO":1,"Chair":2,"President":3,"COO":4,"C-suite":5,"General Counsel":6,"VP":7,"Officer":8,"Director":9,"10% owner":10,"Insider":11};
+  const counts={}; hb.forEach(b=>counts[b.role]=(counts[b.role]||0)+1);
+  const roles=Object.keys(counts).sort((x,y)=>(rank[x]??12)-(rank[y]??12)).map(r=>counts[r]>1?`${counts[r]} ${r==="Director"?"directors":r==="VP"?"VPs":r==="Officer"?"officers":r+"s"}`:r==="Director"?"a director":r);
+  const who = a.n_insiders===1 ? `The <b>${esc(hb[0]?.role||"insider")}</b>` : `<b>${a.n_insiders} insiders</b> (${roles.slice(0,3).join(" + ")}${roles.length>3?" + more":""})`;
+  return `${who} bought <b class="num">${fmt.money(a.total_value)}</b> of ${esc(a.name)} on the open market${span}, at about <span class="num">${fmt.px(a.avg_price)}</span>.`;
+}
+function card(a){
   const c=a.ctx||{}, p=a.perf||{};
-  const perf = (p.ret!=null && p.days>=1) ? `<span class="perf">since alert <b class="${p.ret>=0?"up":"down"}">${fmt.pct(p.ret,1)}</b>${p.spy!=null?`<span style="color:var(--ink3)">vs S&amp;P ${fmt.pct(p.spy,1)}</span>`:""}</span>` : "";
-  const who = (a.buyers||[]).filter(b=>!b.fund).slice(0,3).map(b=>`<span class="chip"><b>${esc(b.role)}</b> ${fmt.money(b.value)}</span>`).join("");
+  const perf = (p.ret!=null && p.days>=1) ? `<span class="perf">since alert <b class="${p.ret>=0?"up":"down"}">${fmt.pct(p.ret,1)}</b>${p.spy!=null?`<span style="color:var(--ink3)">S&amp;P ${fmt.pct(p.spy,1)}</span>`:""}</span>` : "";
+  const facts = `${c.market_cap?`<span><b>${fmt.money(c.market_cap)}</b> cap</span>`:""}${c.price?`<span>now <b>${fmt.px(c.price)}</b></span>`:""}${c.off_high!=null?`<span><b>${fmt.pct(c.off_high)}</b> vs 52w high</span>`:""}${isStake(a)?`<span>${a.amendment?"amendment":"new 13D"}</span>`:(c.industry?`<span>${esc(c.industry)}</span>`:"")}`;
   return `<div class="card tap" data-alert="${esc(a.id)}">
-    <div class="row">${ring(a.score,a.label)}<div style="flex:1;min-width:0"><div class="row" style="gap:8px"><span class="tk">${esc(a.ticker||"—")}</span><span class="pill ${a.label}">${a.label}</span></div><div class="nm">${esc(a.name)}</div></div><div class="num" style="color:var(--ink3);font-size:12px">${fmt.date(a.date)}</div></div>
-    <div class="lead">${a.n_insiders} insider${a.n_insiders===1?"":"s"} bought <b class="num">${fmt.money(a.total_value)}</b> at ~<span class="num">${fmt.px(a.avg_price)}</span>${c.price?` · now <span class="num">${fmt.px(c.price)}</span>`:""}</div>
-    <div class="facts">${c.market_cap?`<span><b>${fmt.money(c.market_cap)}</b> cap</span>`:""}${c.off_high!=null?`<span><b>${fmt.pct(c.off_high)}</b> vs 52w high</span>`:""}${c.chg_30d!=null?`<span><b>${fmt.pct(c.chg_30d)}</b> 30d</span>`:""}${c.industry?`<span>${esc(c.industry)}</span>`:""}</div>
-    <div class="chips">${who}</div>${spark(a.spark,a.date)}${perf?`<div style="margin-top:6px">${perf}</div>`:""}</div>`; }
+    <div class="row">${ring(a.score,a.label)}<div style="flex:1;min-width:0"><div class="row" style="gap:8px"><span class="tk">${esc(a.ticker||"—")}</span><span class="kind ${isStake(a)?"stake":"insider"}">${isStake(a)?"13D stake":"Insider buy"}</span><span class="pill ${a.label}">${a.label}</span></div><div class="nm">${esc(a.name)}</div></div><div class="num" style="color:var(--ink3);font-size:12px">${fmt.date(a.date)}</div></div>
+    <div class="lead">${headline(a)}</div>
+    <div class="facts">${facts}</div>
+    ${spark(a.spark,a.date)}${perf?`<div style="margin-top:6px">${perf}</div>`:""}</div>`; }
+/* ---------- screens ---------- */
 function home(){
   const s=D.summary; if(!s) return `<div class="empty">No scans yet.<br>The first run fills this in within 10 minutes of going live.</div>`;
-  const strong=D.alerts.filter(a=>a.label==="Strong").slice(0,3), latest=D.alerts.filter(a=>!strong.includes(a)).slice(0,5);
-  return `<div class="strip">
+  const week=D.alerts.filter(a=>fmt.days(a.date)<=7 && a.label!=="Weak").sort((x,y)=>(y.label==="Strong")-(x.label==="Strong")||y.score-x.score);
+  const strong=D.alerts.filter(a=>a.label==="Strong").slice(0,3);
+  return `<div class="what"><b>Home</b> — the best signals from both feeds. <span class="kind insider">Insider buy</span> executives buying their own stock. <span class="kind stake">13D stake</span> an investor crossing 5% with intent. Tap any card for the full breakdown.</div>
+    <div class="strip">
     <div class="stat"><div class="v strong">${s.strong_30d}</div><div class="k">Strong · 30d</div></div>
-    <div class="stat"><div class="v">${s.alerts_30d}</div><div class="k">Alerts · 30d</div></div>
-    <div class="stat"><div class="v">${fmt.int(s.buys_30d)}</div><div class="k">Buys scanned</div></div>
+    <div class="stat"><div class="v">${s.stakes_30d??0}</div><div class="k">13D · 30d</div></div>
+    <div class="stat"><div class="v">${fmt.int(s.buys_30d)}</div><div class="k">Buys read</div></div>
     <div class="stat"><div class="v ${s.avg_vs_spy==null?"":s.avg_vs_spy>=0?"up":"down"}">${s.avg_vs_spy==null?"—":fmt.pct(s.avg_vs_spy,1)}</div><div class="k">vs S&amp;P${s.n_perf?` · ${s.n_perf}`:""}</div></div></div>
-    ${!standalone()&&isIOS()?`<div class="card" style="border-color:rgba(255,181,71,.4)"><b>Add Insider to your Home Screen</b><div class="hint" style="margin-top:4px">Tap Share <span style="font-size:15px">⎙</span> → <b>Add to Home Screen</b>, then open it from there and turn on notifications in Settings. iPhone only sends push to home-screen apps.</div></div>`:""}
-    ${Notification && Notification.permission!=="granted" && standalone() ? `<div class="card"><b>Notifications are off</b><div class="hint" style="margin:4px 0 10px">Turn them on to get strong signals on your lock screen.</div><button class="btn" onclick="go('settings')">Set up notifications</button></div>`:""}
-    <h2>Strongest right now</h2>${strong.length?strong.map(alertCard).join(""):`<div class="empty">No strong clusters in the last 30 days. That's normal — strong signals come a few times a month, not daily.</div>`}
-    ${latest.length?`<h2>More alerts</h2>`+latest.map(alertCard).join(""):""}
-    ${s.n_perf?`<h2>Track record</h2><div class="card"><div class="kv"><div><div class="k">Alerts aged 30d+</div><div class="v">${s.n_perf}</div></div><div><div class="k">Beat the S&amp;P</div><div class="v">${fmt.pct(s.hit_rate)}</div></div><div><div class="k">Avg return</div><div class="v ${s.avg_ret>=0?"ok":"warn"}">${fmt.pct(s.avg_ret,1)}</div></div><div><div class="k">Avg vs S&amp;P</div><div class="v ${s.avg_vs_spy>=0?"ok":"warn"}">${fmt.pct(s.avg_vs_spy,1)}</div></div></div><div class="hint" style="margin-top:8px">Measured from the alert day's close. Small samples swing; judge it after dozens of alerts, not a handful.</div></div>`:""}`;
+    ${!standalone()&&isIOS()?`<div class="card" style="border-color:rgba(255,181,71,.4)"><b>Add Insider to your Home Screen</b><div class="hint" style="margin-top:4px">Tap Share → <b>Add to Home Screen</b>, then open it from there and turn on notifications in Settings. iPhone only sends push to home-screen apps.</div></div>`:""}
+    ${("Notification" in window) && Notification.permission!=="granted" && standalone() ? `<div class="card"><b>Notifications are off</b><div class="hint" style="margin:4px 0 10px">Turn them on to get Strong signals on your lock screen.</div><button class="btn" onclick="go('settings')">Set up notifications</button></div>`:""}
+    <h2>This week ${q("labels")}</h2>${week.length?week.slice(0,8).map(card).join(""):`<div class="empty">Nothing Strong or Notable in the last 7 days. Quiet weeks are normal.</div>`}
+    ${week.length<3&&strong.length?`<h2>Most recent Strong</h2>${strong.map(card).join("")}`:""}
+    ${s.n_perf?`<h2>Track record ${q("since")}</h2><div class="card"><div class="kv"><div><div class="k">Alerts aged 30d+</div><div class="v">${s.n_perf}</div></div><div><div class="k">Beat the S&amp;P</div><div class="v">${fmt.pct(s.hit_rate)}</div></div><div><div class="k">Avg return</div><div class="v ${s.avg_ret>=0?"ok":"warn"}">${fmt.pct(s.avg_ret,1)}</div></div><div><div class="k">Avg vs S&amp;P</div><div class="v ${s.avg_vs_spy>=0?"ok":"warn"}">${fmt.pct(s.avg_vs_spy,1)}</div></div></div></div>`:""}`;
 }
-function alerts(){
-  const f = D._f || "all"; const list = D.alerts.filter(a=>f==="all"||a.label===f);
-  return `<div class="row" style="gap:8px;margin:6px 0 12px">${["all","Strong","Notable"].map(k=>`<button class="pill ${k==="all"?"Weak":k}" style="padding:7px 12px;font-size:11.5px;${f===k?"outline:2px solid var(--ink2)":""}" onclick="D._f='${k}';render()">${k==="all"?"All":k}</button>`).join("")}<span style="flex:1"></span><span class="hint">${list.length}</span></div>
-    ${list.length?list.map(alertCard).join(""):`<div class="empty">No alerts yet.</div>`}`;
+function insiders(){
+  const mode=D._imode||"signals"; const f=D._f||"all";
+  const list=D.alerts.filter(a=>!isStake(a)&&(f==="all"||a.label===f));
+  return `<div class="what"><b>Insiders</b> — open-market purchases ${q("open-market")} by officers and directors, from SEC Form 4 ${q("form4")}. <b>Signals</b> are scored; <b>All buys</b> is the raw feed, so you can see everything the scanner read.</div>
+    <div class="seg"><button class="${mode==="signals"?"on":""}" onclick="D._imode='signals';render()">Signals</button><button class="${mode==="all"?"on":""}" onclick="D._imode='all';render()">All buys</button></div>
+    ${mode==="signals"?`<div class="row" style="gap:8px;margin:0 0 12px">${["all","Strong","Notable"].map(k=>`<button class="pill ${k==="all"?"Weak":k}" style="padding:7px 12px;font-size:11.5px;${f===k?"outline:2px solid var(--ink2)":""}" onclick="D._f='${k}';render()">${k==="all"?"All":k}</button>`).join("")}<span style="flex:1"></span><span class="hint">${list.length}</span></div>${list.length?list.map(card).join(""):`<div class="empty">No signals yet.</div>`}`
+    : activity()}`;
+}
+function stakes(){
+  const list=D.alerts.filter(isStake);
+  const all=D.stakes.slice(0,80);
+  const mode=D._smode||"signals";
+  return `<div class="what"><b>Big Money</b> — Schedule 13D filings ${q("13d")}: investors who crossed 5% of a company and say they intend to influence it. Known activists score highest. Passive index funds (13G) are left out.</div>
+    <div class="seg"><button class="${mode==="signals"?"on":""}" onclick="D._smode='signals';render()">Signals</button><button class="${mode==="all"?"on":""}" onclick="D._smode='all';render()">All 13D filings</button></div>
+    ${mode==="signals"?(list.length?list.map(card).join(""):`<div class="empty">No 13D signals yet. The feed fills from the next scan on; activist stakes arrive a few times a week.</div>`)
+    : (all.length?all.map(x=>`<div class="buy"><div><span class="tk">${esc(x.company?.ticker||x.company?.name||x.issuer)}</span> <span class="who">${esc((x.filers||[])[0]?.name||"")}${x.amendment?" · amendment":" · new"}</span></div><div class="amt">${x.percent?x.percent.toFixed(1)+"%":"—"}</div><div class="who">${esc(x.company?.name||"")}${x.score?.label?` · <span class="pill ${x.score.label}" style="padding:1px 6px">${x.score.label}</span>`:""}</div><div class="d">${fmt.date(x.filed)}</div></div>`).join(""):`<div class="empty">No 13D filings read yet.</div>`)}`;
 }
 function browse(){
-  const q=(D._q||"").toLowerCase(); const rows=Object.values(D.companies).filter(c=>!q||(c.ticker||"").toLowerCase().includes(q)||(c.name||"").toLowerCase().includes(q)).sort((a,b)=>b.score.score-a.score.score||b.updated.localeCompare(a.updated));
-  return `<input class="search" placeholder="Search ticker or company" value="${esc(D._q||"")}" oninput="D._q=this.value;renderList()"><div id="list">${companyRows(rows)}</div>`;
+  const qq=(D._q||"").toLowerCase(); const rows=Object.values(D.companies).filter(c=>!qq||(c.ticker||"").toLowerCase().includes(qq)||(c.name||"").toLowerCase().includes(qq)).sort((a,b)=>b.score.score-a.score.score||b.updated.localeCompare(a.updated));
+  return `<div class="what"><b>Companies</b> — every company with an insider buy on file in the last 4 months, ranked by its current score. Most are Weak; that's the point of the ranking.</div><input class="search" placeholder="Search ticker or company" value="${esc(D._q||"")}" oninput="D._q=this.value;renderList()"><div id="list">${companyRows(rows)}</div>`;
 }
 function companyRows(rows){ if(!rows.length) return `<div class="empty">Nothing tracked yet.</div>`;
   return rows.slice(0,200).map(c=>`<div class="card tap" data-co="${esc(c.ticker||"cik"+c.cik)}" style="padding:12px 14px"><div class="row">${ring(c.score.score,c.score.label)}<div style="flex:1;min-width:0"><div class="row" style="gap:8px"><span class="tk">${esc(c.ticker||"—")}</span><span class="pill ${c.score.label}">${c.score.label}</span></div><div class="nm">${esc(c.name)}</div></div><div style="text-align:right"><div class="num" style="font-size:13px">${fmt.money(c.score.total_value)}</div><div class="num" style="font-size:11px;color:var(--ink3)">${c.score.n_insiders} insider${c.score.n_insiders===1?"":"s"} · ${fmt.date(c.score.last_trade)}</div></div></div></div>`).join(""); }
-function renderList(){ const q=(D._q||"").toLowerCase(); const rows=Object.values(D.companies).filter(c=>!q||(c.ticker||"").toLowerCase().includes(q)||(c.name||"").toLowerCase().includes(q)).sort((a,b)=>b.score.score-a.score.score); $("#list").innerHTML=companyRows(rows); bind(); }
+function renderList(){ const qq=(D._q||"").toLowerCase(); const rows=Object.values(D.companies).filter(c=>!qq||(c.ticker||"").toLowerCase().includes(qq)||(c.name||"").toLowerCase().includes(qq)).sort((a,b)=>b.score.score-a.score.score); $("#list").innerHTML=companyRows(rows); bind(); }
 function activity(){
   const b=D.buys.slice(0,150);
-  return `<div class="hint" style="margin:6px 0 10px">Every open-market insider buy the scanner has read, newest first. Most of these are routine; the scoring exists to find the few that aren't.</div>
-    ${b.length?b.map(x=>`<div class="buy tap" data-co="${esc(x.company.ticker||"cik"+x.company.cik)}"><div><span class="tk">${esc(x.company.ticker||x.company.name)}</span> <span class="who">${esc(x.owner.name)} · ${esc(x.owner.title||roleOf(x.owner))}${x.plan_10b5_1?" · 10b5-1 plan":""}${x.direct===false?" · indirect":""}</span></div><div class="amt">${fmt.money(x.value)}</div><div class="who">${fmt.int(x.shares)} sh @ ${fmt.px(x.price)} → owns ${fmt.int(x.owned_after)}</div><div class="d">${fmt.date(x.trade_date)}</div></div>`).join(""):`<div class="empty">No buys read yet.</div>`}`;
+  return `${b.length?b.map(x=>`<div class="buy tap" data-co="${esc(x.company.ticker||"cik"+x.company.cik)}"><div><span class="tk">${esc(x.company.ticker||x.company.name)}</span> <span class="who">${esc(x.owner.name)} · ${esc(x.owner.title||roleOf(x.owner))}${x.plan_10b5_1?" · 10b5-1 plan":""}${x.direct===false?" · indirect":""}</span></div><div class="amt">${fmt.money(x.value)}</div><div class="who">${fmt.int(x.shares)} sh @ ${fmt.px(x.price)} → owns ${fmt.int(x.owned_after)}</div><div class="d">${fmt.date(x.trade_date)}</div></div>`).join(""):`<div class="empty">No buys read yet.</div>`}`;
 }
 function roleOf(o){ const t=(o.title||"").toLowerCase(); if(o.officer||t){ if(/chief exec|\bceo\b/.test(t)) return "CEO"; if(/chief fin|\bcfo\b/.test(t)) return "CFO"; if(/chief oper|\bcoo\b/.test(t)) return "COO"; if(/president/.test(t)) return "President"; if(/chair/.test(t)) return "Chair"; if(/chief/.test(t)) return "C-suite"; if(/vice|\bvp\b|\bevp\b|\bsvp\b/.test(t)) return "VP"; return "Officer"; } if(o.director) return "Director"; if(o.ten_percent) return "10% owner"; return "Insider"; }
 function settings(){
   const perm = ("Notification" in window) ? Notification.permission : "unsupported";
   const last = D.summary && D.summary.last_run;
-  return `<h2>Notifications</h2><div class="card">
+  return `<div class="what"><b>Settings</b> — notifications, how scoring works, a glossary, and the scanner's health.</div>
+    <h2>Notifications</h2><div class="card">
     ${!("serviceWorker" in navigator)||!("PushManager" in window)?`<div class="warn">This browser can't receive push.${isIOS()&&!standalone()?" On iPhone, add Insider to your Home Screen first (Share → Add to Home Screen) and open it from there.":""}</div>`:
-      perm==="granted"&&localStorage.getItem("insider.sub")?`<div class="ok">✓ This device gets alerts.</div><div class="hint" style="margin-top:6px">Reinstalled or notifications stopped? Register again below.</div><button class="btn ghost" style="margin-top:10px" onclick="subscribe()">Register this device again</button><button class="btn ghost" style="margin-top:8px" onclick="testPush()">Show a test notification</button>`:
+      perm==="granted"&&localStorage.getItem("insider.sub")?`<div class="ok">✓ This device gets Strong alerts from both feeds.</div><div class="hint" style="margin-top:6px">Reinstalled or notifications stopped? Register again below.</div><button class="btn ghost" style="margin-top:10px" onclick="subscribe()">Register this device again</button><button class="btn ghost" style="margin-top:8px" onclick="testPush()">Show a test notification</button>`:
       perm==="denied"?`<div class="warn">Notifications are blocked for Insider. iPhone: Settings → Notifications → Insider → Allow.</div>`:
-      `<div class="hint" style="margin-bottom:10px">Two taps: allow notifications, then confirm the device on GitHub (it opens a pre-filled page — just press <b>Submit new issue</b>). That's how this phone tells the scanner where to send alerts.</div>
+      `<div class="hint" style="margin-bottom:10px">Two taps: allow notifications, then confirm the device on GitHub (it opens a pre-filled page — just press <b>Submit new issue</b>).</div>
        <div class="step"><i>1</i><span>Allow notifications when iPhone asks.</span></div><div class="step"><i>2</i><span>A GitHub page opens. Tap <b>Submit new issue</b>. Done.</span></div>
        <button class="btn" onclick="subscribe()">Turn on notifications</button>`}
     <div id="submsg" class="hint" style="margin-top:8px"></div></div>
-    <h2>What gets an alert</h2><div class="card hint" style="font-size:13px;color:var(--ink2)">
-      <p style="margin:0 0 8px">Only <b>open-market purchases</b> (Form 4 code P). Sales, option exercises, tax withholding and gifts are ignored — they carry no signal.</p>
-      <p style="margin:0 0 8px">Score, out of 100: <b>cluster</b> of insiders within 30 days (up to 40) · <b>role</b> of the top buyer (CEO/CFO 20 … director 8) · <b>size</b> of the buy and how much it grows their stake (up to 25) · <b>company size</b>, small caps favored (up to 10) · <b>buying a drop</b> (up to 14) · minus pre-scheduled 10b5-1 buys and fund-only activity.</p>
-      <p style="margin:0"><span class="pill Strong">Strong</span> 65+ (and $100K+ combined; a lone insider needs $250K+) &nbsp; <span class="pill Notable">Notable</span> 40–64 &nbsp; <span class="pill Weak">Weak</span> logged only. Each company alerts at most once a month unless its score jumps.</p></div>
+    <h2>How scoring works</h2><div class="card hint" style="font-size:13px;color:var(--ink2)">
+      <p style="margin:0 0 8px"><span class="kind insider">Insider buy</span> &nbsp;Only open-market purchases count. Score: <b>cluster</b> of insiders within 30 days (≤40) · <b>role</b> of the top buyer (≤20) · <b>size</b> and stake growth (≤30) · <b>company size</b>, small caps favored (≤10) · <b>buying a drop</b> (≤10) · minus 10b5-1 plans, fund-only activity and placements.</p>
+      <p style="margin:0 0 8px"><span class="kind stake">13D stake</span> &nbsp;Score: <b>who</b> (known activist 35, fund 20, individual 15) · <b>stake size</b> (≤20) · <b>new filing vs amendment</b> (≤15) · <b>stated purpose</b> names the board or a sale (15) · <b>company size</b> (≤10). Passive managers never alert.</p>
+      <p style="margin:0"><span class="pill Strong">Strong</span> pushes to your phone &nbsp; <span class="pill Notable">Notable</span> shows in the app &nbsp; <span class="pill Weak">Weak</span> logged only. One alert per company per month unless it jumps. ${q("labels")}</p></div>
+    <h2>Glossary</h2><div class="card" style="padding:6px 14px">${Object.entries(GLOSSARY).map(([k,v])=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)" onclick="gloss('${k}')"><b style="font-size:13.5px">${esc(v[0])}</b><div class="hint">${esc(v[1]).slice(0,90)}…</div></div>`).join("")}</div>
     <h2>Scanner</h2><div class="card">${last?`<div class="kv"><div><div class="k">Last scan</div><div class="v">${fmt.ago(last.at)}</div></div><div><div class="k">Filings read</div><div class="v">${last.new} / ${last.filings}</div></div><div><div class="k">Buys found</div><div class="v">${last.buys}</div></div><div><div class="k">Errors</div><div class="v ${last.errors?"warn":""}">${last.errors}</div></div></div>
-      <div class="hint" style="margin-top:8px">Runs every 10 minutes on GitHub Actions, reading the SEC's EDGAR feed directly. Filings land up to 2 business days after the trade — that lag is the law, not the scanner.</div>`:`<div class="hint">No run recorded yet.</div>`}
-      ${D.config.repo?`<div class="links"><a href="https://github.com/${esc(D.config.repo)}/actions" target="_blank" rel="noopener">Run history ↗</a><a href="https://github.com/${esc(D.config.repo)}" target="_blank" rel="noopener">Code ↗</a></div>`:""}</div>
-    <div class="disc">Insider is information, not advice. Insider buying has shown a modest average edge over 6–12 months in academic studies, with wide dispersion; nothing here predicts any single stock. Source data: U.S. SEC EDGAR; prices: Yahoo Finance.</div>`;
+      <div class="hint" style="margin-top:8px">Runs every 10 minutes on GitHub Actions, reading SEC EDGAR directly. Filings land up to 2 business days after the trade — that lag is the law, not the scanner.</div>`:`<div class="hint">No run recorded yet.</div>`}
+      ${D.config.repo?`<div class="links"><a href="https://github.com/${esc(D.config.repo)}/actions" target="_blank" rel="noopener">Run history ↗</a><a href="https://github.com/${esc(D.config.repo)}" target="_blank" rel="noopener">Code ↗</a></div>`:""}
+      <button class="btn ghost" style="margin-top:12px" onclick="intro()">Show the intro again</button></div>
+    <div class="disc">Insider is information, not advice. Insider buying and activist stakes have shown modest average edges over 6–18 months in academic studies, with wide dispersion; nothing here predicts any single stock. Sources: U.S. SEC EDGAR; prices: Yahoo Finance.</div>`;
 }
-function insiderCard(b,i,sc){
+/* ---------- detail ---------- */
+function insiderCard(b,i){
   const open = i===0 || (D._open||{})[b.name];
   const flags=[b.title||b.role, b.title&&b.flags?.director&&!/director|chair/i.test(b.title)?"Director":"", b.flags?.ten_percent?"10% owner":"", b.fund?"fund entity":""].filter(Boolean).join(" · ");
   const hold = b.holding==="direct"?"held directly":b.holding==="indirect"?`held indirectly${b.natures?.length?" ("+esc(b.natures.join("; "))+")":""}`:"direct and indirect";
@@ -220,43 +284,70 @@ function insiderCard(b,i,sc){
   const trades=(b.trades||[]).map(t=>`<tr><td><div>${fmt.date(t.date)}</div><div class="sub">${esc(t.type)}${t.plan?" · 10b5-1":""}${t.direct?"":" · indirect"}</div></td><td class="n">${fmt.int(t.shares)}<div class="sub">@ ${fmt.px(t.price)}</div></td><td class="n"><b>${fmt.money(t.value)}</b></td></tr>${t.notes?`<tr><td colspan="3" class="note">${esc(t.notes)}</td></tr>`:""}`).join("");
   const also=(b.also||[]).map(e=>`<div class="also"><span>${fmt.date(e.date)}</span><span>${esc(e.type)}${e.derivative&&e.exercise_price?` · strike ${fmt.px(e.exercise_price)}`:""}${e.expires?` · exp ${fmt.date(e.expires)}`:""}</span><span class="num">${fmt.int(e.shares)}${e.price?` @ ${fmt.px(e.price)}`:""}</span></div>`).join("");
   const tl=h?.timeline?.map(t=>`<div class="also"><span>${fmt.date(t.date)}</span><span class="${t.ad==="A"?"ok":t.ad==="D"?"warn":""}">${esc(t.type)}</span><span class="num">${fmt.int(t.shares)}${t.price?` @ ${fmt.px(t.price)}`:""}</span></div>`).join("")||"";
+  const key=esc(b.name).replace(/'/g,"\\'");
   return `<div class="card ins ${open?"open":""}">
-    <div class="row" style="align-items:flex-start" onclick="D._open=D._open||{};D._open['${esc(b.name).replace(/'/g,"\\'")}']=!${!!open};render()">
+    <div class="row" style="align-items:flex-start" onclick="D._open=D._open||{};D._open['${key}']=!${!!open};render()">
       <div style="flex:1;min-width:0"><div class="nm2">${esc(b.name)}</div><div class="sub">${esc(flags)}</div></div>
       <div style="text-align:right"><div class="num" style="font-size:17px;font-weight:600">${fmt.money(b.value)}</div><div class="sub">${b.buys} trade${b.buys===1?"":"s"} · avg ${fmt.px(b.avg_price)}</div></div></div>
-    <div class="kv" style="margin-top:10px;grid-template-columns:1fr 1fr 1fr"><div><div class="k">Owns now</div><div class="v" style="font-size:13px">${fmt.int(b.owned_after)}</div></div><div><div class="k">Of company</div><div class="v" style="font-size:13px">${b.pct_company==null?"—":(b.pct_company*100).toFixed(b.pct_company<0.01?2:1)+"%"}</div></div><div><div class="k">Stake grew</div><div class="v ok" style="font-size:13px">${b.stake_increase==null?"new":fmt.pct(b.stake_increase)}</div></div></div>
-    <div class="sub" style="margin-top:6px">${hold}${b.plan?" · bought under a 10b5-1 plan":""}</div>
+    <div class="kv" style="margin-top:10px;grid-template-columns:1fr 1fr 1fr"><div><div class="k">Owns now</div><div class="v" style="font-size:13px">${fmt.int(b.owned_after)}</div></div><div><div class="k">Of company</div><div class="v" style="font-size:13px">${b.pct_company==null?"—":(b.pct_company*100).toFixed(b.pct_company<0.01?2:1)+"%"}</div></div><div><div class="k">Stake grew ${q("stake")}</div><div class="v ok" style="font-size:13px">${b.stake_increase==null?"new":fmt.pct(b.stake_increase)}</div></div></div>
+    <div class="sub" style="margin-top:6px">${hold} ${q("indirect")}${b.plan?` · bought under a 10b5-1 plan ${q("10b5-1")}`:""}</div>
     ${open?`
       <div class="sec">Trades</div><table><tbody>${trades||`<tr><td class="sub">No individual trades on file</td></tr>`}</tbody></table>
-      ${also?`<div class="sec">Also in these filings</div>${also}`:""}
-      ${h?`<div class="sec">Past 12 months at this company</div><div class="read">${esc(h.read)}</div><div class="facts" style="margin:6px 0"><span><b>${h.buys}</b> buys ${fmt.money(h.buy_value)}</span><span><b>${h.sells}</b> sales ${fmt.money(h.sell_value)}</span>${h.grants?`<span><b>${h.grants}</b> awards</span>`:""}${h.exercises?`<span><b>${h.exercises}</b> exercises</span>`:""}</div>${tl}`:`<div class="sec">Past 12 months</div><div class="sub">History loads for alerted companies on the next scan.</div>`}
+      ${also?`<div class="sec">Also in these filings (options, awards, sales)</div>${also}`:""}
+      ${h?`<div class="sec">Past 12 months at this company</div><div class="read">${esc(h.read)}</div><div class="facts" style="margin:6px 0"><span><b>${h.buys}</b> buys ${fmt.money(h.buy_value)}</span><span><b>${h.sells}</b> sales ${fmt.money(h.sell_value)}</span>${h.grants?`<span><b>${h.grants}</b> awards</span>`:""}${h.exercises?`<span><b>${h.exercises}</b> exercises</span>`:""}</div>${tl}`:`<div class="sec">Past 12 months</div><div class="sub">History is pulled for Strong alerts; it appears after the next scan.</div>`}
     `:`<div class="more">Show trades, options and history ›</div>`}
   </div>`;
 }
+function companyCard(a){
+  const c=a.ctx||{};
+  return `<div class="kv"><div><div class="k">Price</div><div class="v">${fmt.px(c.price)}</div></div><div><div class="k">Market cap</div><div class="v">${fmt.money(c.market_cap)}</div></div><div><div class="k">vs 52w high</div><div class="v ${c.off_high<-0.15?"warn":""}">${fmt.pct(c.off_high)}</div></div><div><div class="k">52w range</div><div class="v" style="font-size:12.5px">${fmt.px(c.low_52w)} – ${fmt.px(c.high_52w)}</div></div><div><div class="k">30d / 90d / 1y</div><div class="v" style="font-size:12.5px">${fmt.pct(c.chg_30d)} · ${fmt.pct(c.chg_90d)} · ${fmt.pct(c.chg_1y)}</div></div><div><div class="k">Industry</div><div class="v" style="font-size:12.5px;font-family:var(--sans)">${esc(c.industry||"—")}${c.exchange?` · ${esc(c.exchange)}`:""}</div></div></div>`;
+}
+function scoreCard(sc, maxes, labels){
+  const pts=sc.points||{};
+  const bars=Object.keys(labels).map(k=>{const v=pts[k]||0, m=Math.abs(maxes[k]); return `<div class="bar"><span>${labels[k]}</span><div class="tr"><div class="fl ${v<0?"neg":""}" style="width:${Math.min(100,Math.abs(v)/m*100)}%"></div></div><span class="pv">${v>0?"+":""}${v}</span></div>`;}).join("");
+  return `<div class="card"><div class="bars">${bars}</div><ul class="reasons">${(sc.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>`;
+}
 function detailView(a, isCompany){
   const c=a.ctx||{}, sc=isCompany?a.score:a, p=a.perf||{};
-  const pts=sc.points||{}; const maxes={cluster:40,role:20,size:25,cap:10,dip:14,penalty:-15}; const labels={cluster:"Cluster",role:"Role",size:"Size",cap:"Company size",dip:"Buying a drop",penalty:"Penalties"};
-  const bars=Object.keys(labels).map(k=>{const v=pts[k]||0, m=Math.abs(maxes[k]); return `<div class="bar"><span>${labels[k]}</span><div class="tr"><div class="fl ${v<0?"neg":""}" style="width:${Math.min(100,Math.abs(v)/m*100)}%"></div></div><span class="pv">${v>0?"+":""}${v}</span></div>`;}).join("");
-  const buyers=(sc.buyers||[]).map((b,i)=>insiderCard(b,i,sc)).join("");
-  const sl = a.sells_90d || sc.sells_90d;
+  const stake=isStake(a);
   const filings=(a.filings||[]).slice(0,8).map(x=>`<a href="https://www.sec.gov/Archives/edgar/data/${esc(a.cik)}/${esc(String(x).replace(/-/g,""))}/" target="_blank" rel="noopener">${esc(x)} ↗</a>`).join("");
-  return `<div class="detail"><button class="back" onclick="detail=null;render()">‹ Back</button>
-    <div class="hd">${ring(sc.score,sc.label)}<div style="flex:1;min-width:0"><div class="row" style="gap:10px"><span class="tk">${esc(a.ticker||"—")}</span><span class="pill ${sc.label}">${sc.label}</span></div><div class="nm">${esc(a.name)}${c.industry?` · ${esc(c.industry)}`:""}${c.exchange?` · ${esc(c.exchange)}`:""}</div></div></div>
-    ${spark(a.spark, isCompany?null:a.date)}
-    <div class="kv" style="margin-top:10px"><div><div class="k">Price</div><div class="v">${fmt.px(c.price)}</div></div><div><div class="k">Insiders paid</div><div class="v">${fmt.px(sc.avg_price)}</div></div><div><div class="k">Market cap</div><div class="v">${fmt.money(c.market_cap)}</div></div><div><div class="k">vs 52w high</div><div class="v ${c.off_high<-0.15?"warn":""}">${fmt.pct(c.off_high)}</div></div><div><div class="k">30d / 90d / 1y</div><div class="v" style="font-size:12.5px">${fmt.pct(c.chg_30d)} · ${fmt.pct(c.chg_90d)} · ${fmt.pct(c.chg_1y)}</div></div><div><div class="k">52w range</div><div class="v" style="font-size:12.5px">${fmt.px(c.low_52w)} – ${fmt.px(c.high_52w)}</div></div></div>
-    ${p.ret!=null?`<div class="card" style="margin-top:10px"><div class="row"><div style="flex:1"><div class="k hint" style="text-transform:uppercase;letter-spacing:.6px;font-size:10.5px">Since alert · ${p.days} days</div><div class="num" style="font-size:22px" class="${p.ret>=0?"ok":"warn"}"><span class="${p.ret>=0?"ok":"warn"}">${fmt.pct(p.ret,1)}</span></div></div><div style="text-align:right"><div class="k hint" style="text-transform:uppercase;letter-spacing:.6px;font-size:10.5px">S&amp;P same period</div><div class="num" style="font-size:22px">${fmt.pct(p.spy,1)}</div></div></div></div>`:""}
-    <h2>Why this score</h2><div class="card"><div class="bars">${bars}</div><ul class="reasons">${(sc.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>
+  const perfCard = p.ret!=null?`<div class="card"><div class="row"><div style="flex:1"><div class="sub" style="text-transform:uppercase;letter-spacing:.6px;font-size:10.5px">Since alert · ${p.days} days ${q("since")}</div><div class="num ${p.ret>=0?"ok":"warn"}" style="font-size:22px">${fmt.pct(p.ret,1)}</div></div><div style="text-align:right"><div class="sub" style="text-transform:uppercase;letter-spacing:.6px;font-size:10.5px">S&amp;P same period</div><div class="num" style="font-size:22px">${fmt.pct(p.spy,1)}</div></div></div></div>`:"";
+  const sl = a.sells_90d || sc.sells_90d;
+  const top = `<div class="detail"><button class="back" onclick="detail=null;render()">‹ Back</button>
+    <div class="hd">${ring(sc.score,sc.label)}<div style="flex:1;min-width:0"><div class="row" style="gap:8px;flex-wrap:wrap"><span class="tk">${esc(a.ticker||"—")}</span><span class="kind ${stake?"stake":"insider"}">${stake?"13D stake":"Insider buy"}</span><span class="pill ${sc.label}">${sc.label}</span></div><div class="nm">${esc(a.name)}</div></div></div>
+    ${spark(a.spark, isCompany?null:a.date)}`;
+  if(stake){
+    return top + `
+    <h2>What happened</h2><div class="card"><div class="lead" style="margin-top:0">${headline(a)}</div>
+      <div class="kv" style="margin-top:8px"><div><div class="k">Stake ${q("percent")}</div><div class="v">${(a.percent||0).toFixed(1)}%</div></div><div><div class="k">Shares</div><div class="v">${fmt.int(a.shares)}</div></div><div><div class="k">Worth about</div><div class="v">${fmt.money(a.stake_value)}</div></div><div><div class="k">Filing</div><div class="v" style="font-size:12.5px">${esc(a.form)}${a.event_date?` · event ${fmt.date(a.event_date)}`:""}</div></div></div>
+      ${(a.filers||[]).length>1?`<div class="chips">${a.filers.map(f=>`<span class="chip"><b>${esc(f.name)}</b>${f.percent?` ${f.percent.toFixed(1)}%`:""}</span>`).join("")}</div>`:""}
+      ${a.purpose?`<div class="sec">Stated purpose ${q("purpose")}</div><div class="quote">“${esc(a.purpose.slice(0,700))}${a.purpose.length>700?"…":""}”</div>`:""}</div>
+    ${perfCard}
+    <h2>Why it scores ${sc.score} ${q("score")}</h2>${scoreCard(sc,{who:35,stake:20,fresh:15,purpose:15,cap:10},{who:"Who filed",stake:"Stake size",fresh:"New vs amended",purpose:"Stated purpose",cap:"Company size"})}
+    <h2>The read</h2><div class="card"><div class="take ${sc.label}"><b>${esc(sc.take?.headline||"")}</b><p>${esc(sc.take?.body||"")}</p></div><div class="facts" style="margin-top:10px"><span>Horizon <b>${esc(sc.take?.horizon||"6–18 months")}</b></span></div></div>
+    <h2>The company</h2><div class="card">${companyCard(a)}</div>
+    ${filings?`<h2>Filings</h2><div class="card links" style="padding-top:8px">${filings}</div>`:""}
+    <div class="disc">Information, not a recommendation. 13D data is the filer's own disclosure.</div></div>`;
+  }
+  const hl = isCompany ? Object.assign({}, a, {n_insiders:sc.n_insiders, buyers:sc.buyers, total_value:sc.total_value, avg_price:sc.avg_price, first_trade:sc.first_trade, last_trade:sc.last_trade}) : a;
+  return top + `
+    <h2>What happened</h2><div class="card"><div class="lead" style="margin-top:0">${headline(hl)}</div>
+      <div class="kv" style="margin-top:8px"><div><div class="k">Insiders paid</div><div class="v">${fmt.px(sc.avg_price)}</div></div><div><div class="k">Price now</div><div class="v">${fmt.px(c.price)}</div></div><div><div class="k">Buying window</div><div class="v" style="font-size:12.5px">${fmt.date(sc.first_trade)}${sc.last_trade!==sc.first_trade?" – "+fmt.date(sc.last_trade):""}</div></div><div><div class="k">Insiders ${q("cluster")}</div><div class="v">${sc.n_insiders}${sc.n_funds?` <span class="sub">+${sc.n_funds} fund</span>`:""}</div></div></div></div>
+    ${perfCard}
+    <h2>Why it scores ${sc.score} ${q("score")}</h2>${scoreCard(sc,{cluster:40,role:20,size:30,cap:10,dip:10,penalty:-15},{cluster:"Cluster",role:"Role",size:"Size",cap:"Company size",dip:"Buying a drop",penalty:"Penalties"})}
     <h2>The read</h2><div class="card"><div class="take ${sc.label}"><b>${esc(sc.take?.headline||"")}</b><p>${esc(sc.take?.body||"")}</p></div><div class="facts" style="margin-top:10px"><span>Horizon <b>${esc(sc.take?.horizon||"6–12 months")}</b></span><span>Studied edge <b>${esc(sc.take?.studied_edge||"")}</b></span></div></div>
-    <h2>Who bought</h2>${buyers}
-    ${sl?`<h2>Insider selling · last 90 days</h2><div class="card">${sl.n?`<div class="lead" style="margin-top:0">${sl.n} open-market sale${sl.n===1?"":"s"} totalling <b class="num">${fmt.money(sl.value)}</b></div><div class="chips">${sl.sellers.map(w=>`<span class="chip"><b>${esc(w.role)}</b> ${esc(w.name)} · ${fmt.money(w.value)} · ${fmt.date(w.last)}</span>`).join("")}</div>`:`<div class="hint">No insider sales on file in the last 90 days — the buying isn't being offset by anyone heading for the exit.</div>`}</div>`:""}
+    <h2>Who bought — tap a name</h2>${(sc.buyers||[]).map((b,i)=>insiderCard(b,i)).join("")}
+    <h2>The company</h2><div class="card">${companyCard(a)}</div>
+    ${sl?`<h2>Selling on the other side · 90 days</h2><div class="card">${sl.n?`<div class="lead" style="margin-top:0">${sl.n} open-market sale${sl.n===1?"":"s"} totalling <b class="num">${fmt.money(sl.value)}</b></div><div class="chips">${sl.sellers.map(w=>`<span class="chip"><b>${esc(w.role)}</b> ${esc(w.name)} · ${fmt.money(w.value)} · ${fmt.date(w.last)}</span>`).join("")}</div>`:`<div class="hint">No insider sales on file in the last 90 days — the buying isn't being offset by anyone heading for the exit.</div>`}</div>`:""}
     ${filings?`<h2>Filings</h2><div class="card links" style="padding-top:8px">${filings}</div>`:""}
     <div class="disc">Information, not a recommendation. Form 4 data is self-reported and occasionally amended.</div></div>`;
 }
+/* ---------- plumbing ---------- */
 function render(){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
   let html;
   if(detail){ html = detail.kind==="alert" ? detailView(D.alerts.find(a=>a.id===detail.id)||{}) : detailView(D.companies[detail.id]||{}, true); }
-  else html = {home,alerts,browse,activity,settings}[tab]();
+  else html = {home,insiders,stakes,browse,settings}[tab]();
   $("#main").innerHTML = html; window.scrollTo(0,0); bind();
 }
 function bind(){
@@ -268,6 +359,17 @@ document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>go(b.datas
 function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
 function standalone(){ return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone===true; }
 function toast(m){ const t=document.createElement("div"); t.className="toast"; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),3200); }
+function intro(){
+  const s=sheet(`<div class="intro"><h3>What Insider watches</h3>
+    <div class="row"><span class="kind insider">Insider buy</span><div><b>Executives buying their own stock</b> with their own money, from SEC Form 4. Best when several insiders buy together, at a smaller company, after a drop. Horizon: 6–12 months.</div></div>
+    <div class="row"><span class="kind stake">13D stake</span><div><b>An investor crossing 5%</b> of a company and saying they intend to influence it — activists, funds, wealthy individuals. Best when it's a known activist with a stated plan. Horizon: 6–18 months.</div></div>
+    <div class="row"><span class="pill Strong">Strong</span><div>The only label that pushes to your phone. <span class="pill Notable">Notable</span> shows in the app. Weak is logged.</div></div>
+    <p style="margin-top:12px">Every card has the same shape: one sentence saying what happened, three facts, a chart, and a tap for the full story — who, why it scores what it does, and what the research says the pattern has meant. Tap any <button class="q">?</button> for a definition.</p>
+    <p style="margin-top:10px;font-size:12.5px;color:var(--ink3)">Information, not advice. Nothing here predicts a single stock.</p>
+    <button class="btn" style="margin-top:14px" onclick="this.closest('.sheet').remove()">Got it</button></div>`);
+  try{ localStorage.setItem("insider.intro","1"); }catch(e){}
+  return s;
+}
 function b64(s){ const p="=".repeat((4-s.length%4)%4), b=(s+p).replace(/-/g,"+").replace(/_/g,"/"), r=atob(b); return Uint8Array.from([...r].map(c=>c.charCodeAt(0))); }
 async function subscribe(){
   const msg=$("#submsg");
@@ -287,9 +389,9 @@ async function subscribe(){
     window.open(url, "_blank");
   }catch(e){ msg.textContent = "Couldn't subscribe: " + (e.message||e); }
 }
-async function testPush(){ const reg=await navigator.serviceWorker.ready; reg.showNotification("Insider", {body:"HRBR: strong insider buying · 3 insiders (CEO, CFO, Director) bought $660K at ~$12.48 · score 83", icon:"icons/icon-192.png", badge:"icons/badge-96.png", tag:"insider-test"}); }
+async function testPush(){ const reg=await navigator.serviceWorker.ready; reg.showNotification("ITG · Strong insider buying · $1.2M", {body:"5 insiders: CEO, CFO, 3 directors · now $4.10 · 65% off high · score 100", icon:"icons/icon-192.png", badge:"icons/badge-96.png", tag:"insider-test"}); }
 if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
-if(location.hash.length>1){ const tk=location.hash.slice(1); tab="alerts"; load().then(()=>{ const a=D.alerts.find(x=>x.ticker===tk); if(a){detail={kind:"alert",id:a.id};render();} }); } else load();
+if(location.hash.length>1){ const tk=location.hash.slice(1); tab="home"; load().then(()=>{ const a=D.alerts.find(x=>x.ticker===tk); if(a){detail={kind:"alert",id:a.id};render();} }); } else load();
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden) load(); });
 </script>
 </body>
