@@ -64,7 +64,7 @@ def parse_13d(xml_bytes, adsh="", filed="", form=""):
     """One 13D as a plain record. Works on the SEC's structured XML; falls back to text patterns."""
     text = xml_bytes.decode("utf-8", "replace")
     rec = {"adsh": adsh, "filed": filed, "form": form or ("SC 13D/A" if "/A" in text[:4000] else "SC 13D"), "issuer": "", "issuer_cik": "", "cusip": "",
-           "filers": [], "percent": 0.0, "shares": 0.0, "purpose": "", "event_date": "", "amendment": "/A" in (form or ""), "source": ""}
+           "filers": [], "percent": 0.0, "shares": 0.0, "purpose": "", "funds": "", "event_date": "", "amendment": "/A" in (form or ""), "source": ""}
     try:
         root = ET.fromstring(xml_bytes)
         rec["source"] = "xml"
@@ -103,6 +103,8 @@ def parse_13d(xml_bytes, adsh="", filed="", form=""):
                 rec["shares"] = max(rec["shares"], v)
             elif n in ("transactionpurpose", "purposeoftransaction", "item4", "purposeoftransactiondescription") and val and not rec["purpose"]:
                 rec["purpose"] = re.sub(r"\s+", " ", "".join(el.itertext())).strip()[:1500]
+            elif n in ("fundssource", "sourceoffunds", "item3", "sourceandamountoffunds") and val and not rec.get("funds"):
+                rec["funds"] = re.sub(r"\s+", " ", "".join(el.itertext())).strip()[:800]
         rec["filers"] = [f for f in filers if f["name"]]
     except ET.ParseError:
         rec["source"] = "text"
@@ -179,22 +181,28 @@ def score_13d(rec, ctx, prior=None):
     else:
         reasons.append("A new 13D: the first time this holder has crossed 5% with intent")
     purpose = (rec.get("purpose") or "").lower()
+    funds = (rec.get("funds") or "").lower()
+    # strip the boilerplate every 13D carries ("may ... engage in discussions ... reserve the right ...") before looking for intent
+    firm = " ".join(sent for sent in re.split(r"(?<=[.;])\s+", purpose) if not re.search(r"\b(may|might|reserve[sd]? the right|from time to time|depending on|without limitation|could)\b", sent))
     pts["purpose"] = 0
-    if re.search(r"board|director|nominat|proxy|strategic alternatives|sale of the (company|issuer)|merger|acquire|take private|engage|discuss.*(management|board)|unlock|maximiz", purpose):
+    intent = re.search(r"\b(intends?|plans?|will|has|have|seeks?|seeking|delivered|sent|submitted|nominated|announced|urged?|demand(?:s|ed)?|propos(?:es|ed|al)|oppos(?:es|ed)|withhold|call(?:ed)? (?:for|a))\b.{0,100}\b(nominat|board (?:seat|representation|refresh|composition|chang)|director candidates?|proxy|solicit|special meeting|strategic (?:review|alternatives|process)|sale of the (?:company|issuer)|take (?:the company )?private|buyback|repurchase|capital (?:return|allocation)|spin|separat|management chang|replace (?:the )?(?:ceo|chief|board)|letter to|open letter|white paper|presentation to|against the (?:merger|transaction|deal)|vote against|oppose)", firm)
+    hard = re.search(r"\b(nomination notice|notice of nomination|proxy (?:contest|fight|solicitation|statement)|consent solicitation|special meeting|withhold campaign|slate of|director candidates|cooperation agreement|settlement agreement|standstill|open letter|letter to the board)\b", purpose)
+    if hard or intent:
         pts["purpose"] += 15
-        reasons.append("Stated purpose mentions the board, a sale, or engaging management — this is an active campaign, not a passive holding")
+        reasons.append("Stated purpose spells out a plan — nominees, a proxy fight, a sale process or a demand to the board — not the usual 'may engage' boilerplate")
     elif re.search(r"investment purposes|ordinary course", purpose):
-        reasons.append("Stated purpose is 'investment purposes' — may stay passive")
+        reasons.append("Stated purpose is the standard 'investment purposes' language")
     # how the stake was acquired matters more than anything: bought on the market = conviction; received in a deal = plumbing
     pts["how"] = 0
-    deal = re.search(r"in connection with|pursuant to (?:the|a) (?:merger|business combination|initial public offering|ipo|agreement and plan|securities purchase|subscription|exchange|conversion|reorgani[sz]ation|underwriting|private placement|registered direct)|as (?:compensation|consideration)|founder|restricted shares|upon (?:the )?(?:closing|consummation|conversion|exercise)|preferred (?:stock|shares)|warrants?|convertible|underwriter|placement agent|de-?spac|spac", purpose)
-    bought = re.search(r"open[- ]market|purchased (?:the )?(?:shares|common)|acquired .{0,40}(?:in the open market|through (?:open[- ]market|brokerage))|undervalued|attractive investment|believe", purpose)
+    how_text = funds + " " + purpose
+    deal = re.search(r"in connection with|pursuant to (?:the|a|an) (?:merger|business combination|initial public offering|ipo|agreement and plan|securities purchase|subscription|exchange|conversion|reorgani[sz]ation|underwriting|private placement|registered direct|plan of)|as (?:compensation|consideration)|founder|restricted shares|upon (?:the )?(?:closing|consummation|conversion|exercise)|preferred (?:stock|shares)|warrants?|convertible|underwriter|placement agent|de-?spac|\bspac\b|debt conversion|loan", how_text)
+    bought = re.search(r"open[- ]market|(?:purchased|bought|acquired) [^.]{0,80}(?:in (?:the )?open[- ]market|brokerage|on the (?:nasdaq|nyse|new york stock exchange|exchange))|working capital of the reporting|funds of the reporting|personal funds|margin", how_text)
     if deal and not bought:
         pts["how"] = -30
         reasons.append("Shares came from a deal (IPO, merger, financing, compensation or conversion) rather than open-market buying — this is paperwork, not a bet")
     elif bought:
         pts["how"] = 8
-        reasons.append("Bought on the open market, by the filer's own account")
+        reasons.append("Bought on the open market with the filer's own funds (Item 3)")
     fund_target = re.search(r"\b(fund|trust|municipal|income|closed[- ]end|portfolio|strategic opportunities|term trust)\b", (rec.get("issuer") or "").lower() + " " + ((rec.get("company") or {}).get("name") or "").lower())
     if fund_target:
         pts["how"] -= 10

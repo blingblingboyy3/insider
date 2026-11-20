@@ -238,7 +238,8 @@ def main():
             rec.update({"score": sc, "ctx": {k: v for k, v in ctx.items() if k != "history"}, "spark": ctx.get("history", [])[-90:], "listed_days": len(ctx.get("history") or [])})
             stakes.append(rec)
             lead = sc["lead"]
-            prev13 = next((a for a in reversed(alerts) if a.get("kind") == "13d" and a["cik"] == comp["cik"] and a.get("lead") == lead), None)
+            norm = lambda n: re.sub(r"[^a-z0-9]", "", (n or "").lower())
+            prev13 = next((a for a in reversed(alerts) if a.get("kind") == "13d" and a["cik"] == comp["cik"] and norm(a.get("lead")) == norm(lead)), None)
             fresh13 = not prev13 or (today - date.fromisoformat(prev13["date"])).days >= REALERT_GAP_DAYS or sc["score"] >= prev13["score"] + 15
             if sc["label"] in ("Strong", "Notable") and fresh13:
                 alert = {"id": f"13d-{f['adsh']}", "kind": "13d", "key": comp["ticker"] or ("cik" + comp["cik"]), "ticker": comp["ticker"], "name": comp["name"], "cik": comp["cik"],
@@ -268,7 +269,8 @@ def main():
             sc = bigmoney.score_13d(rec, ctx, None)
             rec["score"] = sc
             if sc["label"] in ("Strong", "Notable"):
-                prev13 = next((a for a in reversed(alerts) if a.get("kind") == "13d" and a["cik"] == comp.get("cik") and a.get("lead") == sc["lead"]), None)
+                norm = lambda n: re.sub(r"[^a-z0-9]", "", (n or "").lower())
+                prev13 = next((a for a in reversed(alerts) if a.get("kind") == "13d" and a["cik"] == comp.get("cik") and norm(a.get("lead")) == norm(sc["lead"])), None)
                 if prev13 and (date.fromisoformat(rec["filed"]) - date.fromisoformat(prev13["date"])).days < REALERT_GAP_DAYS and sc["score"] < prev13["score"] + 15:
                     continue
                 alerts.append({"id": f"13d-{rec['adsh']}", "kind": "13d", "key": comp.get("ticker") or ("cik" + comp.get("cik", "")), "ticker": comp.get("ticker", ""), "name": comp.get("name", ""), "cik": comp.get("cik", ""),
