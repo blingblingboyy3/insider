@@ -1,0 +1,23 @@
+name: test-push
+on: workflow_dispatch
+permissions:
+  issues: write
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q pywebpush
+      - env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os, sys; sys.path.insert(0, "scanner"); import notify
+          n = notify.send({"title": "Insider is connected", "body": "This phone will get Strong insider-buying signals, usually within 10 minutes of the SEC filing.", "tag": "insider-hello", "url": "./"},
+                          os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_TOKEN"])
+          print("delivered to", n, "device(s)")
+          PY
