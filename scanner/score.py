@@ -142,6 +142,16 @@ def score_company(buys, ctx, today=None):
     if label == "Notable" and human_value < 25e3:
         label = "Weak"
         reasons.append(f"Held to Weak: only {_money(human_value)} combined")
+    # a financing round, not open-market conviction: insiders taking a big slice of the company in one go
+    cap_v = ctx.get("market_cap") or 0
+    biggest = max((p["value"] for p in people.values()), default=0)
+    if (cap_v and total_value > 0.08 * cap_v) or biggest >= 15e6:
+        if label == "Strong":
+            label = "Notable"
+        reasons.append(f"Looks like a private placement or offering ({_money(total_value)} vs a {_money(cap_v) if cap_v else 'small'} company) rather than open-market buying — discounted")
+    if "price" in ctx and not ctx["price"]:
+        label = "Weak"
+        reasons.append("No listed stock price found for this issuer (a fund, a private company or a non-traded REIT) — not actionable")
     return {
         "score": score, "label": label, "points": pts, "reasons": reasons,
         "buyers": sorted(people.values(), key=lambda p: -p["value"]),
