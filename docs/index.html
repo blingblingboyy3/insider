@@ -145,7 +145,7 @@ function spark(pts, markDate){ if(!pts||pts.length<2) return ""; const w=300,h=4
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}" fill="none" stroke="${up?"var(--up)":"var(--down)"}" stroke-width="1.6"/>${mark}</svg>`; }
 function alertCard(a){
   const c=a.ctx||{}, p=a.perf||{};
-  const perf = p.ret!=null ? `<span class="perf">since alert <b class="${p.ret>=0?"up":"down"}">${fmt.pct(p.ret,1)}</b>${p.spy!=null?`<span style="color:var(--ink3)">vs S&amp;P ${fmt.pct(p.spy,1)}</span>`:""}</span>` : "";
+  const perf = (p.ret!=null && p.days>=1) ? `<span class="perf">since alert <b class="${p.ret>=0?"up":"down"}">${fmt.pct(p.ret,1)}</b>${p.spy!=null?`<span style="color:var(--ink3)">vs S&amp;P ${fmt.pct(p.spy,1)}</span>`:""}</span>` : "";
   const who = (a.buyers||[]).filter(b=>!b.fund).slice(0,3).map(b=>`<span class="chip"><b>${esc(b.role)}</b> ${fmt.money(b.value)}</span>`).join("");
   return `<div class="card tap" data-alert="${esc(a.id)}">
     <div class="row">${ring(a.score,a.label)}<div style="flex:1;min-width:0"><div class="row" style="gap:8px"><span class="tk">${esc(a.ticker||"—")}</span><span class="pill ${a.label}">${a.label}</span></div><div class="nm">${esc(a.name)}</div></div><div class="num" style="color:var(--ink3);font-size:12px">${fmt.date(a.date)}</div></div>
@@ -198,7 +198,7 @@ function settings(){
     <h2>What gets an alert</h2><div class="card hint" style="font-size:13px;color:var(--ink2)">
       <p style="margin:0 0 8px">Only <b>open-market purchases</b> (Form 4 code P). Sales, option exercises, tax withholding and gifts are ignored — they carry no signal.</p>
       <p style="margin:0 0 8px">Score, out of 100: <b>cluster</b> of insiders within 30 days (up to 40) · <b>role</b> of the top buyer (CEO/CFO 20 … director 8) · <b>size</b> of the buy and how much it grows their stake (up to 25) · <b>company size</b>, small caps favored (up to 10) · <b>buying a drop</b> (up to 14) · minus pre-scheduled 10b5-1 buys and fund-only activity.</p>
-      <p style="margin:0"><span class="pill Strong">Strong</span> 55+ &nbsp; <span class="pill Notable">Notable</span> 40–54 &nbsp; <span class="pill Weak">Weak</span> logged only. Each company alerts at most once a month unless its score jumps.</p></div>
+      <p style="margin:0"><span class="pill Strong">Strong</span> 65+ (and $100K+ combined; a lone insider needs $250K+) &nbsp; <span class="pill Notable">Notable</span> 40–64 &nbsp; <span class="pill Weak">Weak</span> logged only. Each company alerts at most once a month unless its score jumps.</p></div>
     <h2>Scanner</h2><div class="card">${last?`<div class="kv"><div><div class="k">Last scan</div><div class="v">${fmt.ago(last.at)}</div></div><div><div class="k">Filings read</div><div class="v">${last.new} / ${last.filings}</div></div><div><div class="k">Buys found</div><div class="v">${last.buys}</div></div><div><div class="k">Errors</div><div class="v ${last.errors?"warn":""}">${last.errors}</div></div></div>
       <div class="hint" style="margin-top:8px">Runs every 10 minutes on GitHub Actions, reading the SEC's EDGAR feed directly. Filings land up to 2 business days after the trade — that lag is the law, not the scanner.</div>`:`<div class="hint">No run recorded yet.</div>`}
       ${D.config.repo?`<div class="links"><a href="https://github.com/${esc(D.config.repo)}/actions" target="_blank" rel="noopener">Run history ↗</a><a href="https://github.com/${esc(D.config.repo)}" target="_blank" rel="noopener">Code ↗</a></div>`:""}</div>

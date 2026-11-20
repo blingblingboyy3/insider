@@ -15,7 +15,7 @@ from datetime import date
 from edgar import looks_like_fund, role_of
 
 CLUSTER_DAYS = 30
-STRONG, NOTABLE = 55, 40
+STRONG, NOTABLE = 65, 40
 ROLE_POINTS = {"CEO": 20, "CFO": 20, "Chair": 18, "President": 16, "COO": 14, "C-suite": 12, "General Counsel": 10, "VP": 8,
                "Officer": 8, "Director": 8, "10% owner": 3, "Insider": 4}
 
@@ -114,7 +114,7 @@ def score_company(buys, ctx, today=None):
     elif off is not None and off <= -0.15:
         pts["dip"] += 6
         reasons.append(f"Stock is {abs(off):.0%} off its 52-week high")
-    if c30 is not None and c30 <= -0.10:
+    if c30 is not None and c30 <= -0.10 and pts["dip"] < 10:
         pts["dip"] += 4
         reasons.append(f"Down {abs(c30):.0%} in the last 30 days")
     # penalties
@@ -136,6 +136,9 @@ def score_company(buys, ctx, today=None):
     if label == "Strong" and human_value < 100e3:
         label = "Notable"
         reasons.append(f"Held to Notable: insiders put in {_money(human_value)} combined — under the $100K it takes to call this Strong")
+    if label == "Strong" and n == 1 and human_value < 250e3:
+        label = "Notable"
+        reasons.append(f"Held to Notable: one insider, {_money(human_value)} — a lone buy needs $250K+ to rate Strong; a second insider would do it")
     if label == "Notable" and human_value < 25e3:
         label = "Weak"
         reasons.append(f"Held to Weak: only {_money(human_value)} combined")
