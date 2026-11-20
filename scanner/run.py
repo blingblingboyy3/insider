@@ -10,6 +10,7 @@ the page and the scanner share one source of truth and nothing needs a database.
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import traceback
@@ -22,6 +23,7 @@ import market  # noqa: E402
 import notify  # noqa: E402
 import score  # noqa: E402
 import detail  # noqa: E402
+import bigmoney  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(os.environ.get("INSIDER_DATA") or (ROOT / "docs" / "data"))
@@ -183,6 +185,72 @@ def main():
             traceback.print_exc()
             log["errors"] += 1
 
+    # 3b. big money: new 13D stakes ------------------------------------------------------------------
+    stakes = load("stakes.json", [])
+    seen13 = set(load("seen13d.json", []))
+    if not args.fixtures:
+        try:
+            f13 = bigmoney.recent_13d(since, today)
+        except Exception as e:  # noqa: BLE001
+            print("13D search failed:", e)
+            f13 = []
+        f13 = [f for f in f13 if f["adsh"] not in seen13][:150]
+        shown = False
+        for f in f13:
+            # the subject company is labelled in the search hit; the filer is the other name
+            subj = next((n for n in f["names"] if "(Subject)" in n), "")
+            m = re.search(r"^(.*?)\s*(?:\(([A-Z.\-]{1,6})\))?\s*\(CIK (\d+)\)", subj)
+            comp = {"name": (m.group(1).strip() if m else subj.split(" (")[0]), "ticker": (m.group(2) or "").upper() if m else "", "cik": m.group(3).lstrip("0") if m else ""}
+            try:
+                doc = bigmoney.filing_doc(dict(f, cik=comp["cik"] or f["cik"]))
+                rec = bigmoney.parse_13d(doc, adsh=f["adsh"], filed=f["filed"], form=f.get("form", ""))
+            except Exception as e:  # noqa: BLE001
+                print("skip 13D", f["adsh"], e)
+                log["errors"] += 1
+                seen13.add(f["adsh"])
+                continue
+            seen13.add(f["adsh"])
+            if not shown and rec["source"] == "xml":
+                shown = True
+                try:
+                    import xml.etree.ElementTree as _ET
+                    print("[13d sample tags]", sorted({el.tag.split('}')[-1] for el in _ET.fromstring(doc).iter()})[:80])
+                except Exception:  # noqa: BLE001
+                    pass
+            if not rec["filers"]:
+                filer = next((n for n in f["names"] if "(Filed by)" in n or "(Reporting)" in n), "")
+                if filer:
+                    rec["filers"] = [{"name": re.sub(r"\s*\(.*$", "", filer), "percent": rec["percent"], "shares": rec["shares"], "cik": ""}]
+            rec["company"] = comp
+            prior = next((x["percent"] for x in reversed(stakes) if x["company"]["cik"] == comp["cik"] and x["filers"] and rec["filers"] and x["filers"][0]["name"] == rec["filers"][0]["name"]), None)
+            try:
+                ctx = {"tier": "unknown"} if args.no_market else market.context(comp["ticker"], comp["cik"])
+            except Exception:  # noqa: BLE001
+                ctx = {"tier": "unknown"}
+            if not comp["ticker"] and ctx.get("ticker"):
+                comp["ticker"] = ctx["ticker"]
+            sc = bigmoney.score_13d(rec, ctx, prior)
+            rec.update({"score": sc, "ctx": {k: v for k, v in ctx.items() if k != "history"}, "spark": ctx.get("history", [])[-90:]})
+            stakes.append(rec)
+            if sc["label"] in ("Strong", "Notable"):
+                alert = {"id": f"13d-{f['adsh']}", "kind": "13d", "key": comp["ticker"] or ("cik" + comp["cik"]), "ticker": comp["ticker"], "name": comp["name"], "cik": comp["cik"],
+                         "date": today.isoformat(), "label": sc["label"], "score": sc["score"], "reasons": sc["reasons"], "points": sc["points"], "take": sc["take"],
+                         "filers": rec["filers"], "percent": rec["percent"], "shares": rec["shares"], "stake_value": sc["stake_value"], "purpose": rec["purpose"],
+                         "form": rec["form"], "amendment": rec["amendment"], "event_date": rec["event_date"], "lead": sc["lead"], "kinds": sc["kinds"],
+                         "ctx": rec["ctx"], "price_at_alert": ctx.get("price"), "perf": {}, "spark": rec["spark"], "filings": [f["adsh"]]}
+                alerts.append(alert)
+                pushes.append(alert)
+                log["alerts"].append(f"13D {comp['ticker'] or comp['name'][:12]} {sc['label']} {sc['score']}")
+        stakes = [x for x in stakes if x["filed"] >= (today - timedelta(days=KEEP_ALERTS_DAYS)).isoformat()]
+        save("stakes.json", stakes)
+        save("seen13d.json", sorted(seen13)[-20000:])
+        for a in [p for p in pushes if p.get("kind") == "13d" and p["label"] == "Strong"][:MAX_PUSHES_PER_RUN]:
+            try:
+                notify.send(notify.stake_text(a), repo, token, dry=args.dry)
+            except Exception:  # noqa: BLE001
+                traceback.print_exc()
+                log["errors"] += 1
+
     if args.backfill:
         for a in alerts:
             grp = groups.get(a["key"], [])
@@ -236,6 +304,7 @@ def main():
         "updated": log["at"], "alerts_30d": sum(1 for a in alerts if (today - date.fromisoformat(a["date"])).days <= 30),
         "strong_30d": sum(1 for a in strong if (today - date.fromisoformat(a["date"])).days <= 30),
         "buys_30d": sum(1 for b in buys if (today - date.fromisoformat(b["trade_date"])).days <= 30),
+        "stakes_30d": sum(1 for a in alerts if a.get("kind") == "13d" and (today - date.fromisoformat(a["date"])).days <= 30),
         "companies_tracked": len(companies), "avg_ret": (sum(p["ret"] for p in perf) / len(perf)) if perf else None,
         "avg_vs_spy": (sum(p["ret"] - (p["spy"] or 0) for p in perf) / len(perf)) if perf else None, "n_perf": len(perf),
         "hit_rate": (sum(1 for p in perf if p["ret"] > (p["spy"] or 0)) / len(perf)) if perf else None,

@@ -127,3 +127,20 @@ def _money(v):
         if a >= div:
             return f"${v / div:.1f}{unit}".replace(".0", "")
     return f"${v:,.0f}"
+
+
+def stake_text(a):
+    """Lock-screen text for a Big Money (13D) alert."""
+    c = a.get("ctx") or {}
+    head = f"{a['ticker'] or a['name']} · {a['label']} 13D stake · {a['percent']:.1f}%"
+    body = f"{a['lead']} {'raised its stake to' if a.get('amendment') else 'disclosed'} {a['percent']:.1f}%"
+    if a.get("stake_value"):
+        body += f" (~{_money(a['stake_value'])})"
+    tail = []
+    if c.get("price"):
+        tail.append(f"now ${c['price']:.2f}")
+    if c.get("market_cap"):
+        tail.append(f"{_money(c['market_cap'])} cap")
+    if "activist" in (a.get("kinds") or []):
+        tail.append("known activist")
+    return {"title": head, "body": body + (" · " + " · ".join(tail) if tail else "") + f" · score {a['score']}", "tag": f"13d-{a['ticker']}", "ticker": a["ticker"], "url": f"./#{a['ticker']}"}
