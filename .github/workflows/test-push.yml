@@ -16,7 +16,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python - <<'PY'
-          import os, sys; sys.path.insert(0, "scanner"); import notify
+          import os, sys, re; sys.path.insert(0, "scanner"); import notify
+          raw = os.environ.get("VAPID_PRIVATE_KEY", "")
+          body = re.sub(r"-----(BEGIN|END)[A-Z ]*PRIVATE KEY-----|\s", "", raw)
+          print(f"key check: {len(raw)} chars, {raw.count(chr(10)) + 1} lines, header={'BEGIN' in raw}, footer={'END' in raw}, body={len(body)} base64 chars (expect 196)")
           n = notify.send({"title": "Insider is connected", "body": "This phone will get Strong insider-buying signals, usually within 10 minutes of the SEC filing.", "tag": "insider-hello", "url": "./"},
                           os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_TOKEN"])
           print("delivered to", n, "device(s)")
