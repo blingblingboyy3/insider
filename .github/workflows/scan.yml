@@ -7,6 +7,9 @@ on:
       days:
         description: "Look back this many days (first run / after an outage)"
         default: ""
+      flags:
+        description: "Extra flags, e.g. --rescore --backfill"
+        default: ""
 permissions:
   contents: write
   issues: write
@@ -38,7 +41,7 @@ jobs:
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
           SEC_CONTACT: ${{ secrets.SEC_CONTACT }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scanner/run.py ${{ inputs.days && format('--days {0}', inputs.days) || '' }}
+        run: python scanner/run.py ${{ inputs.days && format('--days {0}', inputs.days) || '' }} ${{ inputs.flags }}
       - name: Save results
         run: |
           git config user.name "insider-scanner"

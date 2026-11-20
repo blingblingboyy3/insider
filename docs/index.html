@@ -94,6 +94,14 @@ td .sub{color:var(--ink3);font-size:11.5px}
 .take.Notable{border-color:var(--up)}.take.Weak{border-color:var(--ink3)}
 .take b{display:block;margin-bottom:4px;font-size:14px}
 .take p{margin:0;color:var(--ink2);font-size:13.5px;line-height:1.55}
+.nm2{font-weight:600;font-size:15px}
+.sec{font:600 10.5px var(--mono);letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin:14px 0 6px}
+.also{display:grid;grid-template-columns:52px 1fr auto;gap:8px;font-size:12.5px;color:var(--ink2);padding:5px 0;border-bottom:1px solid var(--line)}
+.also span:first-child{font-family:var(--mono);color:var(--ink3)}
+td.note{font-size:11.5px;color:var(--ink3);padding-top:0;line-height:1.4}
+.read{font-size:13.5px;color:var(--ink);line-height:1.5}
+.more{font-size:12.5px;color:var(--blue);margin-top:10px}
+.card.ins{cursor:pointer}
 .disc{font-size:11.5px;color:var(--ink3);margin-top:14px;line-height:1.5}
 .links a{display:inline-block;margin:6px 10px 0 0;font:12.5px var(--mono)}
 .toast{position:fixed;left:50%;bottom:calc(90px + var(--safe-b));transform:translateX(-50%);background:var(--bg3);border:1px solid var(--line2);padding:10px 14px;border-radius:12px;font-size:13px;z-index:9;max-width:90vw}
@@ -181,7 +189,7 @@ function renderList(){ const q=(D._q||"").toLowerCase(); const rows=Object.value
 function activity(){
   const b=D.buys.slice(0,150);
   return `<div class="hint" style="margin:6px 0 10px">Every open-market insider buy the scanner has read, newest first. Most of these are routine; the scoring exists to find the few that aren't.</div>
-    ${b.length?b.map(x=>`<div class="buy tap" data-co="${esc(x.company.ticker||"cik"+x.company.cik)}"><div><span class="tk">${esc(x.company.ticker||x.company.name)}</span> <span class="who">${esc(x.owner.name)} · ${esc(roleOf(x.owner))}${x.plan_10b5_1?" · 10b5-1":""}</span></div><div class="amt">${fmt.money(x.value)}</div><div class="who">${fmt.int(x.shares)} sh @ ${fmt.px(x.price)} → owns ${fmt.int(x.owned_after)}</div><div class="d">${fmt.date(x.trade_date)}</div></div>`).join(""):`<div class="empty">No buys read yet.</div>`}`;
+    ${b.length?b.map(x=>`<div class="buy tap" data-co="${esc(x.company.ticker||"cik"+x.company.cik)}"><div><span class="tk">${esc(x.company.ticker||x.company.name)}</span> <span class="who">${esc(x.owner.name)} · ${esc(x.owner.title||roleOf(x.owner))}${x.plan_10b5_1?" · 10b5-1 plan":""}${x.direct===false?" · indirect":""}</span></div><div class="amt">${fmt.money(x.value)}</div><div class="who">${fmt.int(x.shares)} sh @ ${fmt.px(x.price)} → owns ${fmt.int(x.owned_after)}</div><div class="d">${fmt.date(x.trade_date)}</div></div>`).join(""):`<div class="empty">No buys read yet.</div>`}`;
 }
 function roleOf(o){ const t=(o.title||"").toLowerCase(); if(o.officer||t){ if(/chief exec|\bceo\b/.test(t)) return "CEO"; if(/chief fin|\bcfo\b/.test(t)) return "CFO"; if(/chief oper|\bcoo\b/.test(t)) return "COO"; if(/president/.test(t)) return "President"; if(/chair/.test(t)) return "Chair"; if(/chief/.test(t)) return "C-suite"; if(/vice|\bvp\b|\bevp\b|\bsvp\b/.test(t)) return "VP"; return "Officer"; } if(o.director) return "Director"; if(o.ten_percent) return "10% owner"; return "Insider"; }
 function settings(){
@@ -204,11 +212,33 @@ function settings(){
       ${D.config.repo?`<div class="links"><a href="https://github.com/${esc(D.config.repo)}/actions" target="_blank" rel="noopener">Run history ↗</a><a href="https://github.com/${esc(D.config.repo)}" target="_blank" rel="noopener">Code ↗</a></div>`:""}</div>
     <div class="disc">Insider is information, not advice. Insider buying has shown a modest average edge over 6–12 months in academic studies, with wide dispersion; nothing here predicts any single stock. Source data: U.S. SEC EDGAR; prices: Yahoo Finance.</div>`;
 }
+function insiderCard(b,i,sc){
+  const open = i===0 || (D._open||{})[b.name];
+  const flags=[b.title||b.role, b.title&&b.flags?.director&&!/director|chair/i.test(b.title)?"Director":"", b.flags?.ten_percent?"10% owner":"", b.fund?"fund entity":""].filter(Boolean).join(" · ");
+  const hold = b.holding==="direct"?"held directly":b.holding==="indirect"?`held indirectly${b.natures?.length?" ("+esc(b.natures.join("; "))+")":""}`:"direct and indirect";
+  const h=b.history;
+  const trades=(b.trades||[]).map(t=>`<tr><td><div>${fmt.date(t.date)}</div><div class="sub">${esc(t.type)}${t.plan?" · 10b5-1":""}${t.direct?"":" · indirect"}</div></td><td class="n">${fmt.int(t.shares)}<div class="sub">@ ${fmt.px(t.price)}</div></td><td class="n"><b>${fmt.money(t.value)}</b></td></tr>${t.notes?`<tr><td colspan="3" class="note">${esc(t.notes)}</td></tr>`:""}`).join("");
+  const also=(b.also||[]).map(e=>`<div class="also"><span>${fmt.date(e.date)}</span><span>${esc(e.type)}${e.derivative&&e.exercise_price?` · strike ${fmt.px(e.exercise_price)}`:""}${e.expires?` · exp ${fmt.date(e.expires)}`:""}</span><span class="num">${fmt.int(e.shares)}${e.price?` @ ${fmt.px(e.price)}`:""}</span></div>`).join("");
+  const tl=h?.timeline?.map(t=>`<div class="also"><span>${fmt.date(t.date)}</span><span class="${t.ad==="A"?"ok":t.ad==="D"?"warn":""}">${esc(t.type)}</span><span class="num">${fmt.int(t.shares)}${t.price?` @ ${fmt.px(t.price)}`:""}</span></div>`).join("")||"";
+  return `<div class="card ins ${open?"open":""}">
+    <div class="row" style="align-items:flex-start" onclick="D._open=D._open||{};D._open['${esc(b.name).replace(/'/g,"\\'")}']=!${!!open};render()">
+      <div style="flex:1;min-width:0"><div class="nm2">${esc(b.name)}</div><div class="sub">${esc(flags)}</div></div>
+      <div style="text-align:right"><div class="num" style="font-size:17px;font-weight:600">${fmt.money(b.value)}</div><div class="sub">${b.buys} trade${b.buys===1?"":"s"} · avg ${fmt.px(b.avg_price)}</div></div></div>
+    <div class="kv" style="margin-top:10px;grid-template-columns:1fr 1fr 1fr"><div><div class="k">Owns now</div><div class="v" style="font-size:13px">${fmt.int(b.owned_after)}</div></div><div><div class="k">Of company</div><div class="v" style="font-size:13px">${b.pct_company==null?"—":(b.pct_company*100).toFixed(b.pct_company<0.01?2:1)+"%"}</div></div><div><div class="k">Stake grew</div><div class="v ok" style="font-size:13px">${b.stake_increase==null?"new":fmt.pct(b.stake_increase)}</div></div></div>
+    <div class="sub" style="margin-top:6px">${hold}${b.plan?" · bought under a 10b5-1 plan":""}</div>
+    ${open?`
+      <div class="sec">Trades</div><table><tbody>${trades||`<tr><td class="sub">No individual trades on file</td></tr>`}</tbody></table>
+      ${also?`<div class="sec">Also in these filings</div>${also}`:""}
+      ${h?`<div class="sec">Past 12 months at this company</div><div class="read">${esc(h.read)}</div><div class="facts" style="margin:6px 0"><span><b>${h.buys}</b> buys ${fmt.money(h.buy_value)}</span><span><b>${h.sells}</b> sales ${fmt.money(h.sell_value)}</span>${h.grants?`<span><b>${h.grants}</b> awards</span>`:""}${h.exercises?`<span><b>${h.exercises}</b> exercises</span>`:""}</div>${tl}`:`<div class="sec">Past 12 months</div><div class="sub">History loads for alerted companies on the next scan.</div>`}
+    `:`<div class="more">Show trades, options and history ›</div>`}
+  </div>`;
+}
 function detailView(a, isCompany){
   const c=a.ctx||{}, sc=isCompany?a.score:a, p=a.perf||{};
   const pts=sc.points||{}; const maxes={cluster:40,role:20,size:25,cap:10,dip:14,penalty:-15}; const labels={cluster:"Cluster",role:"Role",size:"Size",cap:"Company size",dip:"Buying a drop",penalty:"Penalties"};
   const bars=Object.keys(labels).map(k=>{const v=pts[k]||0, m=Math.abs(maxes[k]); return `<div class="bar"><span>${labels[k]}</span><div class="tr"><div class="fl ${v<0?"neg":""}" style="width:${Math.min(100,Math.abs(v)/m*100)}%"></div></div><span class="pv">${v>0?"+":""}${v}</span></div>`;}).join("");
-  const buyers=(sc.buyers||[]).map(b=>`<tr><td><b>${esc(b.name)}</b><div class="sub">${esc(b.role)}${b.fund?" · fund entity":""}${b.plan?" · 10b5-1 plan":""}${b.direct?"":" · indirect"} · ${fmt.date(b.first)}${b.last!==b.first?"–"+fmt.date(b.last):""}</div></td><td class="n">${fmt.money(b.value)}<div class="sub">${fmt.int(b.shares)} sh @ ${fmt.px(b.avg_price)}</div></td><td class="n">${b.stake_increase==null?"new":fmt.pct(b.stake_increase)}<div class="sub">owns ${fmt.int(b.owned_after)}</div></td></tr>`).join("");
+  const buyers=(sc.buyers||[]).map((b,i)=>insiderCard(b,i,sc)).join("");
+  const sl = a.sells_90d || sc.sells_90d;
   const filings=(a.filings||[]).slice(0,8).map(x=>`<a href="https://www.sec.gov/Archives/edgar/data/${esc(a.cik)}/${esc(String(x).replace(/-/g,""))}/" target="_blank" rel="noopener">${esc(x)} ↗</a>`).join("");
   return `<div class="detail"><button class="back" onclick="detail=null;render()">‹ Back</button>
     <div class="hd">${ring(sc.score,sc.label)}<div style="flex:1;min-width:0"><div class="row" style="gap:10px"><span class="tk">${esc(a.ticker||"—")}</span><span class="pill ${sc.label}">${sc.label}</span></div><div class="nm">${esc(a.name)}${c.industry?` · ${esc(c.industry)}`:""}${c.exchange?` · ${esc(c.exchange)}`:""}</div></div></div>
@@ -217,7 +247,8 @@ function detailView(a, isCompany){
     ${p.ret!=null?`<div class="card" style="margin-top:10px"><div class="row"><div style="flex:1"><div class="k hint" style="text-transform:uppercase;letter-spacing:.6px;font-size:10.5px">Since alert · ${p.days} days</div><div class="num" style="font-size:22px" class="${p.ret>=0?"ok":"warn"}"><span class="${p.ret>=0?"ok":"warn"}">${fmt.pct(p.ret,1)}</span></div></div><div style="text-align:right"><div class="k hint" style="text-transform:uppercase;letter-spacing:.6px;font-size:10.5px">S&amp;P same period</div><div class="num" style="font-size:22px">${fmt.pct(p.spy,1)}</div></div></div></div>`:""}
     <h2>Why this score</h2><div class="card"><div class="bars">${bars}</div><ul class="reasons">${(sc.reasons||[]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>
     <h2>The read</h2><div class="card"><div class="take ${sc.label}"><b>${esc(sc.take?.headline||"")}</b><p>${esc(sc.take?.body||"")}</p></div><div class="facts" style="margin-top:10px"><span>Horizon <b>${esc(sc.take?.horizon||"6–12 months")}</b></span><span>Studied edge <b>${esc(sc.take?.studied_edge||"")}</b></span></div></div>
-    <h2>Who bought</h2><div class="card" style="padding:6px 14px"><table><thead><tr><th>Insider</th><th class="n">Bought</th><th class="n">Stake +</th></tr></thead><tbody>${buyers}</tbody></table></div>
+    <h2>Who bought</h2>${buyers}
+    ${sl?`<h2>Insider selling · last 90 days</h2><div class="card">${sl.n?`<div class="lead" style="margin-top:0">${sl.n} open-market sale${sl.n===1?"":"s"} totalling <b class="num">${fmt.money(sl.value)}</b></div><div class="chips">${sl.sellers.map(w=>`<span class="chip"><b>${esc(w.role)}</b> ${esc(w.name)} · ${fmt.money(w.value)} · ${fmt.date(w.last)}</span>`).join("")}</div>`:`<div class="hint">No insider sales on file in the last 90 days — the buying isn't being offset by anyone heading for the exit.</div>`}</div>`:""}
     ${filings?`<h2>Filings</h2><div class="card links" style="padding-top:8px">${filings}</div>`:""}
     <div class="disc">Information, not a recommendation. Form 4 data is self-reported and occasionally amended.</div></div>`;
 }

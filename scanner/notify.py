@@ -102,11 +102,14 @@ def send(alert, repo=None, token=None, dry=False):
 
 def alert_text(ticker, company, sc, ctx):
     """Title/body for the lock-screen notification: short, with the numbers that matter."""
-    buyers = sc["buyers"]
-    who = ", ".join(f"{b['role']}" for b in buyers[:3] if not b["fund"]) or "insiders"
+    buyers = [b for b in sc["buyers"] if not b.get("fund")]
+    def short(n):
+        parts = n.replace(",", " ").split()
+        return parts[0].title() if len(parts) == 1 else f"{parts[-1].title()} {parts[0].title()}" if "," in n else n.title()
+    who = "; ".join(f"{b['role']} {short(b['name'])} {_money(b['value'])}" for b in buyers[:3]) or "insiders"
     n = sc["n_insiders"]
-    head = f"{ticker or company}: {sc['label'].lower()} insider buying"
-    lead = f"{n} insider{'s' if n != 1 else ''} ({who}) bought {_money(sc['total_value'])} at ~${sc['avg_price']:.2f}"
+    head = f"{ticker or company} · {sc['label']} insider buying · {_money(sc['total_value'])}"
+    lead = f"{n} insider{'s' if n != 1 else ''}: {who}" + (f" at ~${sc['avg_price']:.2f}" if sc.get("avg_price") else "")
     tail = []
     if ctx.get("price"):
         tail.append(f"now ${ctx['price']:.2f}")

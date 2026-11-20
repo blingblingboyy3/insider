@@ -181,6 +181,82 @@ def parse_form4(xml_bytes, adsh="", filed=""):
         }
         for o in owners:
             recs.append(dict(rec, owner=o))
+    # derivatives: options, warrants, RSUs — exercises, grants, conversions. Context, never a buy signal.
+    for tx in root.findall("derivativeTable/derivativeTransaction"):
+        notes = " ".join(foot.get(fid.get("id"), "") for fid in tx.iter("footnoteId"))
+        shares = _num(_t(tx, "transactionAmounts/transactionShares/value"))
+        price = _num(_t(tx, "transactionAmounts/transactionPricePerShare/value"))
+        rec = {
+            "adsh": adsh, "filed": filed or period, "trade_date": _t(tx, "transactionDate/value") or period, "derivative": True,
+            "security": _t(tx, "securityTitle/value"), "code": _t(tx, "transactionCoding/transactionCode").upper(),
+            "form_type": _t(tx, "transactionCoding/transactionFormType"),
+            "ad": _t(tx, "transactionAmounts/transactionAcquiredDisposedCode/value").upper(),
+            "shares": shares, "price": price, "value": round(shares * price, 2),
+            "exercise_price": _num(_t(tx, "conversionOrExercisePrice/value")),
+            "exercisable": _t(tx, "exerciseDate/value"), "expires": _t(tx, "expirationDate/value"),
+            "underlying": _t(tx, "underlyingSecurity/underlyingSecurityTitle/value"),
+            "underlying_shares": _num(_t(tx, "underlyingSecurity/underlyingSecurityShares/value")),
+            "owned_after": _num(_t(tx, "postTransactionAmounts/sharesOwnedFollowingTransaction/value")),
+            "direct": _t(tx, "ownershipNature/directOrIndirectOwnership/value").upper() != "I",
+            "nature": _t(tx, "ownershipNature/natureOfOwnership/value"),
+            "notes": notes, "plan_10b5_1": bool(re.search(r"10b5-1", notes, re.I)),
+            "company": company,
+        }
+        for o in owners:
+            recs.append(dict(rec, owner=o))
+    return recs
+
+
+CODES = {"P": "Open-market purchase", "S": "Open-market sale", "A": "Grant / award", "M": "Option exercise", "F": "Tax withholding",
+         "G": "Gift", "D": "Sale back to company", "C": "Conversion", "X": "Option exercise (in-the-money)", "J": "Other (see note)",
+         "W": "Will / inheritance", "I": "Discretionary (plan)", "Z": "Trust deposit/withdrawal", "K": "Equity swap", "U": "Tender of shares",
+         "L": "Small acquisition", "H": "Expired long", "E": "Expired short", "O": "Out-of-the-money exercise"}
+
+
+def describe(rec):
+    """A short label for one transaction, the way a person would say it."""
+    base = CODES.get(rec.get("code", ""), "Transaction " + rec.get("code", "?"))
+    if rec.get("derivative"):
+        sec = rec.get("security") or "derivative"
+        if rec.get("code") == "A":
+            return f"Granted {sec}"
+        if rec.get("code") in ("M", "X"):
+            return f"Exercised {sec}"
+        return f"{base} — {sec}"
+    if rec.get("plan_10b5_1") and rec.get("code") == "P":
+        return "Purchase under a 10b5-1 plan"
+    return base
+
+
+def insider_filings(owner_cik, issuer_cik, limit=12):
+    """Recent Form 4s this insider filed about this company (accession numbers, newest first), from their SEC record."""
+    try:
+        data = json.loads(get(f"https://data.sec.gov/submissions/CIK{int(owner_cik):010d}.json").decode())
+    except Exception:  # noqa: BLE001
+        return []
+    rec = data.get("filings", {}).get("recent", {})
+    out = []
+    for form, adsh, date in zip(rec.get("form", []), rec.get("accessionNumber", []), rec.get("filingDate", [])):
+        if form in ("4", "4/A"):
+            out.append({"adsh": adsh, "filed": date})
+        if len(out) >= limit:
+            break
+    return out
+
+
+def insider_history(owner_cik, issuer_cik, months=12, limit=10):
+    """This insider's own transactions at this company over the past year, parsed from their filings."""
+    cutoff = (datetime.now(timezone.utc).date() - timedelta(days=30 * months)).isoformat()
+    recs = []
+    for f in insider_filings(owner_cik, issuer_cik, limit):
+        if f["filed"] < cutoff:
+            break
+        try:
+            xml = filing_xml({"cik": owner_cik, "adsh": f["adsh"], "file": ""})
+            recs += [r for r in parse_form4(xml, adsh=f["adsh"], filed=f["filed"])
+                     if r["company"]["cik"] == str(issuer_cik).lstrip("0") and (r["owner"].get("cik") or "").lstrip("0") == str(owner_cik).lstrip("0")]
+        except Exception:  # noqa: BLE001
+            continue
     return recs
 
 

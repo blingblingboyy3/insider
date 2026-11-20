@@ -21,6 +21,7 @@ import edgar  # noqa: E402
 import market  # noqa: E402
 import notify  # noqa: E402
 import score  # noqa: E402
+import detail  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(os.environ.get("INSIDER_DATA") or (ROOT / "docs" / "data"))
@@ -44,9 +45,20 @@ def save(name, obj):
     (DATA / name).write_text(json.dumps(obj, separators=(",", ":"), ensure_ascii=False))
 
 
+KEEP = ("adsh", "filed", "trade_date", "code", "ad", "shares", "price", "value", "owned_after", "direct", "nature", "security", "plan_10b5_1", "company", "owner",
+        "derivative", "exercise_price", "expires", "underlying", "underlying_shares")
+
+
 def compact(b):
-    """The fields of a buy worth keeping around."""
-    return {k: b[k] for k in ("adsh", "filed", "trade_date", "code", "shares", "price", "value", "owned_after", "direct", "plan_10b5_1", "company", "owner")}
+    """The fields of a transaction worth keeping around."""
+    out = {k: b[k] for k in KEEP if k in b}
+    out["notes"] = (b.get("notes") or "")[:300]
+    out["owner"] = {k: v for k, v in b["owner"].items() if k != "other_text"}
+    return out
+
+
+def tkey(b):
+    return (b["adsh"], b["owner"].get("cik") or b["owner"].get("name"), b["trade_date"], b.get("code"), b["shares"], b.get("security", ""), bool(b.get("derivative")))
 
 
 def main():
@@ -56,6 +68,7 @@ def main():
     ap.add_argument("--fixtures", help="folder of Form 4 XML files to use instead of EDGAR (tests)")
     ap.add_argument("--no-market", action="store_true", help="skip price/market-cap lookups (tests)")
     ap.add_argument("--rescore", action="store_true", help="re-score every company on file (after a scoring change)")
+    ap.add_argument("--backfill", action="store_true", help="fill trade detail and insider histories into existing alerts")
     args = ap.parse_args()
     t0 = time.time()
     today = datetime.now(timezone.utc).date()
@@ -68,11 +81,12 @@ def main():
     log = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "since": since.isoformat(), "filings": 0, "new": 0, "buys": 0, "alerts": [], "errors": 0}
 
     # 1. new filings ------------------------------------------------------------------------------
-    new_buys = []
+    new_buys, new_events = [], []
     if args.fixtures:
         for p in sorted(Path(args.fixtures).glob("*.xml")):
             recs = edgar.parse_form4(p.read_bytes(), adsh=p.stem, filed=today.isoformat())
             new_buys += [r for r in recs if edgar.is_open_market_buy(r)]
+            new_events += [r for r in recs if not edgar.is_open_market_buy(r)]
             log["filings"] += 1
             log["new"] += 1
     else:
@@ -93,18 +107,28 @@ def main():
             seen.add(f["adsh"])
             log["new"] += 1
             new_buys += [r for r in recs if edgar.is_open_market_buy(r)]
+            new_events += [r for r in recs if not edgar.is_open_market_buy(r)]
     log["buys"] = len(new_buys)
     print(f"{log['new']} new filings, {len(new_buys)} open-market buys")
 
     # 2. merge, trim ------------------------------------------------------------------------------
-    have = {(b["adsh"], b["owner"].get("cik") or b["owner"].get("name"), b["trade_date"], b["shares"]) for b in buys}
+    have = {tkey(b) for b in buys}
     for b in new_buys:
-        k = (b["adsh"], b["owner"].get("cik") or b["owner"].get("name"), b["trade_date"], b["shares"])
-        if k not in have:
+        if tkey(b) not in have:
             buys.append(compact(b))
-            have.add(k)
+            have.add(tkey(b))
     cutoff = (today - timedelta(days=KEEP_BUYS_DAYS)).isoformat()
     buys = [b for b in buys if b["trade_date"] >= cutoff]
+    # context events: only for companies that have a buy on file (keeps the file small), 120 days
+    events = load("events.json", [])
+    buy_cos = {b["company"]["cik"] for b in buys}
+    have_e = {tkey(e) for e in events}
+    for e in new_events:
+        if e["company"]["cik"] in buy_cos and tkey(e) not in have_e and e.get("trade_date", "") >= cutoff:
+            events.append(compact(e))
+            have_e.add(tkey(e))
+    events = [e for e in events if e["company"]["cik"] in buy_cos and e["trade_date"] >= cutoff]
+    people = load("people.json", {})
 
     # 3. score every company that got a new buy -----------------------------------------------------
     groups = score.group_buys(buys)
@@ -135,13 +159,18 @@ def main():
         prev = next((a for a in reversed(alerts) if a["key"] == key), None)
         fresh = not prev or (today - date.fromisoformat(prev["date"])).days >= REALERT_GAP_DAYS
         upgraded = prev and (sc["score"] >= prev["score"] + 15 or (sc["label"] == "Strong" and prev["label"] != "Strong"))
+        sc["buyers"] = detail.buyers(sc["buyers"], grp, events, ctx)
+        sc["sells_90d"] = detail.sells(comp["cik"], events, today)
+        entry["score"] = sc
         if sc["label"] in ("Strong", "Notable") and (fresh or upgraded):
+            if not args.no_market:
+                detail.histories(sc["buyers"], comp["cik"], people, today)
             alert = {"id": f"{key}-{today.isoformat()}", "key": key, "ticker": comp["ticker"], "name": comp["name"], "cik": comp["cik"],
                      "date": today.isoformat(), "label": sc["label"], "score": sc["score"], "reasons": sc["reasons"], "points": sc["points"],
                      "buyers": sc["buyers"], "n_insiders": sc["n_insiders"], "total_value": sc["total_value"], "avg_price": sc["avg_price"],
                      "first_trade": sc["first_trade"], "last_trade": sc["last_trade"], "take": sc["take"],
                      "ctx": entry["ctx"], "price_at_alert": ctx.get("price"), "perf": {}, "spark": entry["spark"],
-                     "filings": sorted({b["adsh"] for b in grp})}
+                     "filings": sorted({b["adsh"] for b in grp}), "sells_90d": sc["sells_90d"]}
             alerts.append(alert)
             pushes.append(alert)
             log["alerts"].append(f"{comp['ticker']} {sc['label']} {sc['score']}")
@@ -153,6 +182,21 @@ def main():
         except Exception:  # noqa: BLE001
             traceback.print_exc()
             log["errors"] += 1
+
+    if args.backfill:
+        for a in alerts:
+            grp = groups.get(a["key"], [])
+            if not grp:
+                continue
+            a["buyers"] = detail.buyers(a["buyers"], grp, events, a.get("ctx", {}))
+            a["sells_90d"] = detail.sells(a["cik"], events, today)
+            if a["label"] == "Strong" and not args.no_market:
+                detail.histories(a["buyers"], a["cik"], people, today)
+        for key, entry in companies.items():
+            grp = groups.get(key, [])
+            if grp:
+                entry["score"]["buyers"] = detail.buyers(entry["score"]["buyers"], grp, events, entry.get("ctx", {}))
+                entry["score"]["sells_90d"] = detail.sells(entry["cik"], events, today)
 
     # 4. how past alerts have done (once a day, cheap) ------------------------------------------------
     cutoff_a = (today - timedelta(days=KEEP_ALERTS_DAYS)).isoformat()
@@ -179,6 +223,8 @@ def main():
     save("buys.json", buys)
     save("alerts.json", alerts)
     save("companies.json", companies)
+    save("events.json", events)
+    save("people.json", {k: v for k, v in people.items() if v.get("as_of", "") >= (today - timedelta(days=60)).isoformat()})
     log["seconds"] = round(time.time() - t0, 1)
     runs = (runs + [log])[-300:]
     save("runs.json", runs)
