@@ -16,24 +16,32 @@ ACTIVISTS = r"\b(elliott|starboard|icahn|third point|pershing|trian|jana|engaged
 
 
 def recent_13d(since, until=None, max_pages=10):
+    """New 13D filings (originals and amendments). The structured form is called 'SCHEDULE 13D' on EDGAR; the
+    legacy text form 'SC 13D' is still used by a few filers, so both are searched."""
     until = until or date.today()
     out, seen = [], set()
-    for page in range(max_pages):
-        q = {"forms": "SC 13D,SC 13D/A", "dateRange": "custom", "startdt": since.isoformat(), "enddt": until.isoformat(), "from": page * 100}
-        data = json.loads(get(SEARCH + "?" + urllib.parse.urlencode(q)).decode())
-        hits = data.get("hits", {}).get("hits", [])
-        for h in hits:
-            src = h.get("_source", {})
-            adsh, _, fname = (h.get("_id") or "").partition(":")
-            if not adsh or adsh in seen:
-                continue
-            seen.add(adsh)
-            ciks = [str(c).lstrip("0") for c in (src.get("ciks") or [])]
-            out.append({"adsh": adsh, "cik": ciks[0] if ciks else "", "ciks": ciks, "filed": src.get("file_date", ""), "file": fname,
-                        "form": src.get("form_type") or src.get("root_forms", [""])[0], "names": src.get("display_names") or []})
-        if len(hits) < 100:
-            break
+    for forms in ("SCHEDULE 13D", "SC 13D"):
+        for page in range(max_pages):
+            q = {"forms": forms, "dateRange": "custom", "startdt": since.isoformat(), "enddt": until.isoformat(), "from": page * 100}
+            data = json.loads(get(SEARCH + "?" + urllib.parse.urlencode(q)).decode())
+            hits = data.get("hits", {}).get("hits", [])
+            for h in hits:
+                src = h.get("_source", {})
+                adsh, _, fname = (h.get("_id") or "").partition(":")
+                if not adsh or adsh in seen:
+                    continue
+                seen.add(adsh)
+                ciks = [str(c).lstrip("0") for c in (src.get("ciks") or [])]
+                out.append({"adsh": adsh, "cik": ciks[0] if ciks else adsh[:10].lstrip("0"), "ciks": ciks, "filed": src.get("file_date", ""), "file": fname,
+                            "form": src.get("file_type") or src.get("form_type") or forms, "names": src.get("display_names") or []})
+            if len(hits) < 100:
+                break
     return out
+
+
+def _iso(d):
+    m = re.match(r"(\d{2})/(\d{2})/(\d{4})", d or "")
+    return f"{m.group(3)}-{m.group(1)}-{m.group(2)}" if m else (d or "")[:10]
 
 
 def _local(tag):
@@ -67,11 +75,17 @@ def parse_13d(xml_bytes, adsh="", filed="", form=""):
                 rec["issuer"] = rec["issuer"] or val
             elif n in ("issuercik",) and val:
                 rec["issuer_cik"] = val.lstrip("0")
+            elif n == "submissiontype" and val:
+                rec["form"] = val
+                rec["amendment"] = "/A" in val
+            elif n == "amendmentno" and val:
+                rec["amendment"] = True
+                rec["amendment_no"] = val
             elif n in ("issuercusip", "cusip", "cusipnumber") and val:
                 rec["cusip"] = rec["cusip"] or val
             elif n in ("dateofevent", "eventdaterequiresfilingthisstatement", "dateofeventwhichrequiresfilingofthisstatement") and val:
-                rec["event_date"] = val[:10]
-            elif n in ("reportingpersonname", "filingpersonname", "nameofreportingperson", "rptownername", "reportingpersoninfo"):
+                rec["event_date"] = _iso(val)
+            elif n in ("reportingpersonname", "nameofreportingperson", "rptownername"):
                 if val:
                     cur = {"name": val, "percent": 0.0, "shares": 0.0, "cik": ""}
                     filers.append(cur)
@@ -87,7 +101,7 @@ def parse_13d(xml_bytes, adsh="", filed="", form=""):
                 if cur is not None and not cur["shares"]:
                     cur["shares"] = v
                 rec["shares"] = max(rec["shares"], v)
-            elif n in ("purposeoftransaction", "item4", "purposeoftransactiondescription") and val and not rec["purpose"]:
+            elif n in ("transactionpurpose", "purposeoftransaction", "item4", "purposeoftransactiondescription") and val and not rec["purpose"]:
                 rec["purpose"] = re.sub(r"\s+", " ", "".join(el.itertext())).strip()[:1500]
         rec["filers"] = [f for f in filers if f["name"]]
     except ET.ParseError:
@@ -179,6 +193,12 @@ def score_13d(rec, ctx, prior=None):
     label = "Strong" if score >= 60 else "Notable" if score >= 40 else "Weak"
     if "passive" in kinds and "activist" not in kinds:
         label = "Weak"
+    if pct >= 50:
+        label = "Weak"
+        reasons.append(f"Already a controlling holder ({pct:.0f}%) — routine disclosure, not a new campaign")
+    if rec["amendment"] and prior is not None and pct <= prior + 0.5 and "activist" not in kinds:
+        label = "Weak" if label == "Notable" else label
+        reasons.append("Stake unchanged or lower than last filing")
     take = {"Strong": ("An activist-style stake. Historically the stock gains several percent on the disclosure and the holder pushes for change over the following 6–18 months — a board seat, a sale, buybacks. "
                        "People who follow these treat the filer's track record as the main input and expect a long, noisy path."),
             "Notable": "A meaningful 5%+ holder with intent, but without the hallmarks of a full campaign yet. Worth watching for amendments that raise the stake or name directors.",

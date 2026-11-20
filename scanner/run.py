@@ -197,12 +197,8 @@ def main():
         f13 = [f for f in f13 if f["adsh"] not in seen13][:150]
         shown = False
         for f in f13:
-            # the subject company is labelled in the search hit; the filer is the other name
-            subj = next((n for n in f["names"] if "(Subject)" in n), "")
-            m = re.search(r"^(.*?)\s*(?:\(([A-Z.\-]{1,6})\))?\s*\(CIK (\d+)\)", subj)
-            comp = {"name": (m.group(1).strip() if m else subj.split(" (")[0]), "ticker": (m.group(2) or "").upper() if m else "", "cik": m.group(3).lstrip("0") if m else ""}
             try:
-                doc = bigmoney.filing_doc(dict(f, cik=comp["cik"] or f["cik"]))
+                doc = bigmoney.filing_doc(f)
                 rec = bigmoney.parse_13d(doc, adsh=f["adsh"], filed=f["filed"], form=f.get("form", ""))
             except Exception as e:  # noqa: BLE001
                 print("skip 13D", f["adsh"], e)
@@ -210,6 +206,15 @@ def main():
                 seen13.add(f["adsh"])
                 continue
             seen13.add(f["adsh"])
+            # the subject company: the search hit lists it as "Name  (TICK)  (CIK n)"; match on the XML's issuerCIK, else the non-filer name
+            parsed = []
+            for n in f["names"]:
+                m = re.search(r"^(.*?)\s*(?:\(([A-Z.\-]{1,6})\))?\s*\(CIK (\d+)\)", n)
+                if m:
+                    parsed.append({"name": m.group(1).strip(), "ticker": (m.group(2) or "").upper(), "cik": m.group(3).lstrip("0")})
+            filer_cik = f["adsh"][:10].lstrip("0")
+            comp = next((x for x in parsed if rec["issuer_cik"] and x["cik"] == rec["issuer_cik"]), None) or \
+                   next((x for x in parsed if x["cik"] != filer_cik), None) or {"name": rec["issuer"], "ticker": "", "cik": rec["issuer_cik"]}
             if not shown and rec["source"] == "xml":
                 shown = True
                 try:
@@ -218,9 +223,9 @@ def main():
                 except Exception:  # noqa: BLE001
                     pass
             if not rec["filers"]:
-                filer = next((n for n in f["names"] if "(Filed by)" in n or "(Reporting)" in n), "")
+                filer = next((x for x in parsed if x["cik"] == filer_cik), None)
                 if filer:
-                    rec["filers"] = [{"name": re.sub(r"\s*\(.*$", "", filer), "percent": rec["percent"], "shares": rec["shares"], "cik": ""}]
+                    rec["filers"] = [{"name": filer["name"], "percent": rec["percent"], "shares": rec["shares"], "cik": filer["cik"]}]
             rec["company"] = comp
             prior = next((x["percent"] for x in reversed(stakes) if x["company"]["cik"] == comp["cik"] and x["filers"] and rec["filers"] and x["filers"][0]["name"] == rec["filers"][0]["name"]), None)
             try:
