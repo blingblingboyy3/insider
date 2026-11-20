@@ -36,6 +36,7 @@ jobs:
         env:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          SEC_CONTACT: ${{ secrets.SEC_CONTACT }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python scanner/run.py ${{ inputs.days && format('--days {0}', inputs.days) || '' }}
       - name: Save results

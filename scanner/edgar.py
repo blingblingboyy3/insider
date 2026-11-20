@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 
 # The SEC requires every automated caller to identify itself with a name and a contact address, and it answers
 # 403 to anything that doesn't. Set SEC_CONTACT to your email in the repo secrets to use your own.
-UA = os.environ.get("SEC_USER_AGENT") or f"Insider personal insider-buying scanner {os.environ.get('SEC_CONTACT', 'blingblingboyy3@users.noreply.github.com')}"
+UA = os.environ.get("SEC_USER_AGENT") or f"Insider personal insider-buying scanner {os.environ.get('SEC_CONTACT') or 'set SEC_CONTACT to your email'}"
 SEARCH = "https://efts.sec.gov/LATEST/search-index"
 ARCHIVE = "https://www.sec.gov/Archives/edgar/data"
 CURRENT = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=4&output=atom&count=100&start={start}"
