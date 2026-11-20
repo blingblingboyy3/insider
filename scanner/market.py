@@ -62,11 +62,21 @@ def change(hist, days):
 
 
 def shares_outstanding(cik):
+    for concept in ("dei/EntityCommonStockSharesOutstanding", "us-gaap/CommonStockSharesOutstanding", "us-gaap/WeightedAverageNumberOfDilutedSharesOutstanding"):
+        try:
+            data = json.loads(sec_get(f"https://data.sec.gov/api/xbrl/companyconcept/CIK{int(cik):010d}/{concept}.json").decode())
+            vals = sorted(data.get("units", {}).get("shares", []), key=lambda v: v.get("end", ""))
+            if vals and vals[-1]["val"]:
+                return float(vals[-1]["val"])
+        except Exception:  # noqa: BLE001
+            continue
+    return None
+
+
+def yahoo_cap(ticker):
+    r = _yahoo(ticker)
     try:
-        data = json.loads(sec_get(f"https://data.sec.gov/api/xbrl/companyconcept/CIK{int(cik):010d}/dei/EntityCommonStockSharesOutstanding.json").decode())
-        vals = data.get("units", {}).get("shares", [])
-        vals = sorted(vals, key=lambda v: v.get("end", ""))
-        return float(vals[-1]["val"]) if vals else None
+        return float(r["meta"].get("marketCap") or 0) or None
     except Exception:  # noqa: BLE001
         return None
 
@@ -101,7 +111,7 @@ def context(ticker, cik):
     hist = price_history(ticker) if ticker else []
     now = hist[-1][1] if hist else None
     shares = shares_outstanding(cik) if cik else None
-    cap = (now * shares) if (now and shares) else None
+    cap = (now * shares) if (now and shares) else yahoo_cap(ticker)
     facts = company_facts(cik) if cik else {}
     hi = max((c for _, c in hist), default=None)
     lo = min((c for _, c in hist), default=None)

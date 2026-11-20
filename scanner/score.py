@@ -85,7 +85,7 @@ def score_company(buys, ctx, today=None):
     pts["size"] = 0
     if big:
         v = big["value"]
-        pts["size"] += 15 if v >= 1e6 else 10 if v >= 250e3 else 6 if v >= 100e3 else 3 if v >= 25e3 else 0
+        pts["size"] += 20 if v >= 1e6 else 15 if v >= 250e3 else 10 if v >= 100e3 else 6 if v >= 50e3 else 3 if v >= 25e3 else 0
         inc = max((p["stake_increase"] for p in humans if p["stake_increase"] is not None), default=None)
         if inc is None and any(p["stake_increase"] is None for p in humans):
             pts["size"] += 8
@@ -131,6 +131,14 @@ def score_company(buys, ctx, today=None):
     score = max(0, min(100, sum(pts.values())))
     label = "Strong" if score >= STRONG else "Notable" if score >= NOTABLE else "Weak"
     total_value = sum(p["value"] for p in people.values())
+    human_value = sum(p["value"] for p in humans)
+    # a dollar gate: however neat the pattern, pocket-change buys are not conviction
+    if label == "Strong" and human_value < 100e3:
+        label = "Notable"
+        reasons.append(f"Held to Notable: insiders put in {_money(human_value)} combined — under the $100K it takes to call this Strong")
+    if label == "Notable" and human_value < 25e3:
+        label = "Weak"
+        reasons.append(f"Held to Weak: only {_money(human_value)} combined")
     return {
         "score": score, "label": label, "points": pts, "reasons": reasons,
         "buyers": sorted(people.values(), key=lambda p: -p["value"]),

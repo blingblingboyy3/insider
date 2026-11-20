@@ -20,10 +20,12 @@ def test_cluster_scores_strong_and_fund_scores_weak():
     assert score.score_company(g["PLNC"], {"tier": "mid"})["points"]["penalty"] == -10
 
 def test_run_offline(tmp_path):
-    env = {"PATH": "/usr/bin:/bin"}
-    r = subprocess.run([sys.executable, str(ROOT / "scanner/run.py"), "--fixtures", str(ROOT / "tests/fixtures"), "--no-market", "--dry"], capture_output=True, text=True, cwd=ROOT)
+    import os, tempfile
+    data = Path(tmp_path or tempfile.mkdtemp())
+    r = subprocess.run([sys.executable, str(ROOT / "scanner/run.py"), "--fixtures", str(ROOT / "tests/fixtures"), "--no-market", "--dry"], capture_output=True, text=True, cwd=ROOT,
+                       env=dict(os.environ, INSIDER_DATA=str(data)))
     assert r.returncode == 0, r.stderr
-    alerts = json.loads((ROOT / "docs/data/alerts.json").read_text())
+    alerts = json.loads((data / "alerts.json").read_text())
     assert any(a["ticker"] == "HRBR" and a["label"] == "Strong" for a in alerts)
 
 if __name__ == "__main__":

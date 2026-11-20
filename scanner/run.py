@@ -23,7 +23,7 @@ import notify  # noqa: E402
 import score  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA = ROOT / "docs" / "data"
+DATA = Path(os.environ.get("INSIDER_DATA") or (ROOT / "docs" / "data"))
 KEEP_BUYS_DAYS = 120
 KEEP_ALERTS_DAYS = 400
 MAX_FILINGS_PER_RUN = 400
@@ -55,6 +55,7 @@ def main():
     ap.add_argument("--days", type=int, default=0, help="how far back to look for filings (default: since last run, min 3)")
     ap.add_argument("--fixtures", help="folder of Form 4 XML files to use instead of EDGAR (tests)")
     ap.add_argument("--no-market", action="store_true", help="skip price/market-cap lookups (tests)")
+    ap.add_argument("--rescore", action="store_true", help="re-score every company on file (after a scoring change)")
     args = ap.parse_args()
     t0 = time.time()
     today = datetime.now(timezone.utc).date()
@@ -109,6 +110,8 @@ def main():
     groups = score.group_buys(buys)
     touched = {(b["company"]["ticker"] or "cik" + b["company"]["cik"]) for b in new_buys}
     companies = load("companies.json", {})
+    if args.rescore or not companies:
+        touched = set(groups)                       # first run, or after a scoring change: score everything on file
     pushes = []
     for key in touched:
         grp = groups.get(key, [])
@@ -142,7 +145,7 @@ def main():
             log["alerts"].append(f"{comp['ticker']} {sc['label']} {sc['score']}")
     pushes.sort(key=lambda a: -a["score"])
     repo, token = os.environ.get("GITHUB_REPOSITORY"), os.environ.get("GITHUB_TOKEN")
-    for a in pushes[:MAX_PUSHES_PER_RUN]:
+    for a in [p for p in pushes if p["label"] == "Strong"][:MAX_PUSHES_PER_RUN]:
         try:
             notify.send(notify.alert_text(a["ticker"], a["name"], a, a["ctx"]), repo, token, dry=args.dry)
         except Exception:  # noqa: BLE001
