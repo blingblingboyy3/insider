@@ -78,6 +78,8 @@ def send(alert, repo=None, token=None, dry=False):
         print(f"[dry] would push to {len(subs)} device(s):", alert["title"])
         return 0
     from pywebpush import WebPushException, webpush
+    from py_vapid import Vapid
+    key = Vapid.from_pem(key.encode()) if "BEGIN" in key else Vapid.from_string(private_key=key)
     payload = json.dumps({"title": alert["title"], "body": alert["body"], "url": alert.get("url", "./"), "tag": alert.get("tag", "insider"),
                           "ticker": alert.get("ticker", "")})
     sent = 0
