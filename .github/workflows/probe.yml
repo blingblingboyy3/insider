@@ -1,0 +1,50 @@
+name: probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          SEC_CONTACT: ${{ secrets.SEC_CONTACT }}
+        run: |
+          python - <<'PY'
+          import json, os, re, sys, urllib.parse
+          sys.path.insert(0, "scanner"); import edgar
+          from datetime import date, timedelta
+          s, e = (date.today()-timedelta(days=7)).isoformat(), date.today().isoformat()
+          for forms in ("SC 13D", "SC 13D/A", "SC 13D,SC 13D/A", "SC%2013D"):
+              q = {"forms": forms, "dateRange": "custom", "startdt": s, "enddt": e}
+              url = edgar.SEARCH + "?" + urllib.parse.urlencode(q)
+              try:
+                  d = json.loads(edgar.get(url).decode()); hits = d.get("hits", {}).get("hits", [])
+                  print("FORMS", repr(forms), "total", d.get("hits", {}).get("total"), "n", len(hits))
+                  for h in hits[:3]:
+                      print("   ", h["_id"], h["_source"].get("form_type"), h["_source"].get("file_type"), h["_source"].get("display_names"))
+              except Exception as ex:
+                  print("FORMS", repr(forms), "ERR", ex)
+          # one real 13D document: list its XML tags
+          q = {"forms": "SC 13D", "dateRange": "custom", "startdt": s, "enddt": e}
+          d = json.loads(edgar.get(edgar.SEARCH + "?" + urllib.parse.urlencode(q)).decode()); hits = d.get("hits", {}).get("hits", [])
+          for h in hits[:4]:
+              adsh, _, fname = h["_id"].partition(":"); ciks = h["_source"].get("ciks") or []
+              for cik in ciks[:1]:
+                  folder = f"{edgar.ARCHIVE}/{str(cik).lstrip('0')}/{adsh.replace('-','')}"
+                  idx = edgar.get(folder + "/").decode("utf-8","replace")
+                  names = re.findall(r'href="[^"]*?/([^"/]+\.(?:xml|htm|html|txt))"', idx, re.I)
+                  print("FOLDER", folder, "files", names[:8])
+                  xmls = [n for n in names if n.lower().endswith(".xml")]
+                  if xmls:
+                      import xml.etree.ElementTree as ET
+                      doc = edgar.get(f"{folder}/{xmls[0]}")
+                      try:
+                          root = ET.fromstring(doc); tags = [el.tag.split('}')[-1] for el in root.iter()]
+                          print("XML", xmls[0], "tags:", sorted(set(tags))[:120])
+                          for el in root.iter():
+                              t = el.tag.split('}')[-1]
+                              if re.search(r"percent|amount|name|cik|purpose|cusip|date", t, re.I) and (el.text or "").strip():
+                                  print("   ", t, "=", (el.text or "").strip()[:100])
+                      except Exception as ex:
+                          print("XML parse error", ex, doc[:200])
+                  break
+          PY
