@@ -57,7 +57,7 @@ def sells(cik, events, today):
     return {"n": len(s), "value": round(sum(e["value"] for e in s), 2), "sellers": sorted(who.values(), key=lambda w: -w["value"])[:6]}
 
 
-def histories(buyer_list, issuer_cik, people, today, max_people=6):
+def histories(buyer_list, issuer_cik, people, today, max_people=4):
     """Fill each buyer's 12-month record at this company from their own SEC filings (cached ~60 days in `people`)."""
     for p in [b for b in buyer_list if not b.get("fund")][:max_people]:
         cik = p.get("cik")
@@ -67,7 +67,7 @@ def histories(buyer_list, issuer_cik, people, today, max_people=6):
         rec = people.get(k)
         if not rec or rec.get("as_of", "") < (today - timedelta(days=7)).isoformat():
             try:
-                tx = insider_history(cik, issuer_cik)
+                tx = insider_history(cik, issuer_cik, limit=8)
             except Exception:  # noqa: BLE001
                 tx = []
             rec = people[k] = {"as_of": today.isoformat(), "tx": [{"date": t["trade_date"], "code": t["code"], "ad": t.get("ad"), "shares": t["shares"], "price": t["price"],

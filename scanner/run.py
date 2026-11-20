@@ -190,8 +190,9 @@ def main():
                 continue
             a["buyers"] = detail.buyers(a["buyers"], grp, events, a.get("ctx", {}))
             a["sells_90d"] = detail.sells(a["cik"], events, today)
-            if a["label"] == "Strong" and not args.no_market:
+            if a["label"] == "Strong" and not args.no_market and (today - date.fromisoformat(a["date"])).days <= 21:
                 detail.histories(a["buyers"], a["cik"], people, today)
+                save("people.json", people)              # keep progress even if the job is cut short
         for key, entry in companies.items():
             grp = groups.get(key, [])
             if grp:
