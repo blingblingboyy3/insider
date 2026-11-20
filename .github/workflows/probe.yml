@@ -13,7 +13,7 @@ jobs:
           sys.path.insert(0, "scanner"); import edgar
           from datetime import date, timedelta
           s, e = (date.today()-timedelta(days=7)).isoformat(), date.today().isoformat()
-          for forms in ("SC 13D", "SC 13D/A", "SC 13D,SC 13D/A", "SC%2013D"):
+          for forms in ("SCHEDULE 13D", "SCHEDULE 13D/A", "SCHEDULE 13D,SCHEDULE 13D/A"):
               q = {"forms": forms, "dateRange": "custom", "startdt": s, "enddt": e}
               url = edgar.SEARCH + "?" + urllib.parse.urlencode(q)
               try:
@@ -24,7 +24,7 @@ jobs:
               except Exception as ex:
                   print("FORMS", repr(forms), "ERR", ex)
           # one real 13D document: list its XML tags
-          q = {"forms": "SC 13D", "dateRange": "custom", "startdt": s, "enddt": e}
+          q = {"forms": "SCHEDULE 13D", "dateRange": "custom", "startdt": s, "enddt": e}
           d = json.loads(edgar.get(edgar.SEARCH + "?" + urllib.parse.urlencode(q)).decode()); hits = d.get("hits", {}).get("hits", [])
           for h in hits[:4]:
               adsh, _, fname = h["_id"].partition(":"); ciks = h["_source"].get("ciks") or []
