@@ -235,9 +235,12 @@ def main():
             if not comp["ticker"] and ctx.get("ticker"):
                 comp["ticker"] = ctx["ticker"]
             sc = bigmoney.score_13d(rec, ctx, prior)
-            rec.update({"score": sc, "ctx": {k: v for k, v in ctx.items() if k != "history"}, "spark": ctx.get("history", [])[-90:]})
+            rec.update({"score": sc, "ctx": {k: v for k, v in ctx.items() if k != "history"}, "spark": ctx.get("history", [])[-90:], "listed_days": len(ctx.get("history") or [])})
             stakes.append(rec)
-            if sc["label"] in ("Strong", "Notable"):
+            lead = sc["lead"]
+            prev13 = next((a for a in reversed(alerts) if a.get("kind") == "13d" and a["cik"] == comp["cik"] and a.get("lead") == lead), None)
+            fresh13 = not prev13 or (today - date.fromisoformat(prev13["date"])).days >= REALERT_GAP_DAYS or sc["score"] >= prev13["score"] + 15
+            if sc["label"] in ("Strong", "Notable") and fresh13:
                 alert = {"id": f"13d-{f['adsh']}", "kind": "13d", "key": comp["ticker"] or ("cik" + comp["cik"]), "ticker": comp["ticker"], "name": comp["name"], "cik": comp["cik"],
                          "date": today.isoformat(), "label": sc["label"], "score": sc["score"], "reasons": sc["reasons"], "points": sc["points"], "take": sc["take"],
                          "filers": rec["filers"], "percent": rec["percent"], "shares": rec["shares"], "stake_value": sc["stake_value"], "purpose": rec["purpose"],
@@ -255,6 +258,26 @@ def main():
             except Exception:  # noqa: BLE001
                 traceback.print_exc()
                 log["errors"] += 1
+
+    if args.rescore:
+        # re-score stored 13D filings under current rules and rebuild their alerts
+        alerts = [a for a in alerts if a.get("kind") != "13d"]
+        for rec in sorted(stakes, key=lambda r: r["filed"]):
+            comp = rec.get("company") or {}
+            ctx = dict(rec.get("ctx") or {}, history=[0] * rec.get("listed_days", 200))
+            sc = bigmoney.score_13d(rec, ctx, None)
+            rec["score"] = sc
+            if sc["label"] in ("Strong", "Notable"):
+                prev13 = next((a for a in reversed(alerts) if a.get("kind") == "13d" and a["cik"] == comp.get("cik") and a.get("lead") == sc["lead"]), None)
+                if prev13 and (date.fromisoformat(rec["filed"]) - date.fromisoformat(prev13["date"])).days < REALERT_GAP_DAYS and sc["score"] < prev13["score"] + 15:
+                    continue
+                alerts.append({"id": f"13d-{rec['adsh']}", "kind": "13d", "key": comp.get("ticker") or ("cik" + comp.get("cik", "")), "ticker": comp.get("ticker", ""), "name": comp.get("name", ""), "cik": comp.get("cik", ""),
+                               "date": rec["filed"], "label": sc["label"], "score": sc["score"], "reasons": sc["reasons"], "points": sc["points"], "take": sc["take"],
+                               "filers": rec["filers"], "percent": rec["percent"], "shares": rec["shares"], "stake_value": sc["stake_value"], "purpose": rec["purpose"],
+                               "form": rec["form"], "amendment": rec["amendment"], "event_date": rec["event_date"], "lead": sc["lead"], "kinds": sc["kinds"],
+                               "ctx": rec["ctx"], "price_at_alert": rec["ctx"].get("price"), "perf": {}, "spark": rec.get("spark", []), "filings": [rec["adsh"]]})
+        alerts.sort(key=lambda a: a["date"])
+        save("stakes.json", stakes)
 
     if args.backfill:
         for a in alerts:

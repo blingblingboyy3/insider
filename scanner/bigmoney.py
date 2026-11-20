@@ -185,17 +185,37 @@ def score_13d(rec, ctx, prior=None):
         reasons.append("Stated purpose mentions the board, a sale, or engaging management — this is an active campaign, not a passive holding")
     elif re.search(r"investment purposes|ordinary course", purpose):
         reasons.append("Stated purpose is 'investment purposes' — may stay passive")
+    # how the stake was acquired matters more than anything: bought on the market = conviction; received in a deal = plumbing
+    pts["how"] = 0
+    deal = re.search(r"in connection with|pursuant to (?:the|a) (?:merger|business combination|initial public offering|ipo|agreement and plan|securities purchase|subscription|exchange|conversion|reorgani[sz]ation|underwriting|private placement|registered direct)|as (?:compensation|consideration)|founder|restricted shares|upon (?:the )?(?:closing|consummation|conversion|exercise)|preferred (?:stock|shares)|warrants?|convertible|underwriter|placement agent|de-?spac|spac", purpose)
+    bought = re.search(r"open[- ]market|purchased (?:the )?(?:shares|common)|acquired .{0,40}(?:in the open market|through (?:open[- ]market|brokerage))|undervalued|attractive investment|believe", purpose)
+    if deal and not bought:
+        pts["how"] = -30
+        reasons.append("Shares came from a deal (IPO, merger, financing, compensation or conversion) rather than open-market buying — this is paperwork, not a bet")
+    elif bought:
+        pts["how"] = 8
+        reasons.append("Bought on the open market, by the filer's own account")
+    fund_target = re.search(r"\b(fund|trust|municipal|income|closed[- ]end|portfolio|strategic opportunities|term trust)\b", (rec.get("issuer") or "").lower() + " " + ((rec.get("company") or {}).get("name") or "").lower())
+    if fund_target:
+        pts["how"] -= 10
+        reasons.append("The target is a closed-end fund or trust — discount-arbitrage activism, a different game from operating companies")
     pts["cap"] = {"micro": 4, "small": 10, "mid": 10, "large": 6, "mega": 2}.get(ctx.get("tier", "unknown"), 4)
     if ctx.get("tier") in ("small", "mid"):
         reasons.append(f"{ctx['tier'].title()}-cap ({_money(ctx.get('market_cap'))}): a 5%+ holder has real leverage here")
     value = (ctx.get("market_cap") or 0) * pct / 100 if ctx.get("market_cap") else 0
     score = max(0, min(100, sum(pts.values())))
-    label = "Strong" if score >= 60 else "Notable" if score >= 40 else "Weak"
+    label = "Strong" if score >= 70 else "Notable" if score >= 45 else "Weak"
     if "passive" in kinds and "activist" not in kinds:
         label = "Weak"
-    if pct >= 50:
+    if pct >= 30 and "activist" not in kinds:
         label = "Weak"
-        reasons.append(f"Already a controlling holder ({pct:.0f}%) — routine disclosure, not a new campaign")
+        reasons.append(f"A {pct:.0f}% holder is control, not activism — routine disclosure")
+    if not ctx.get("price") or (ctx.get("market_cap") or 0) < 50e6:
+        label = "Weak" if label != "Weak" else label
+        reasons.append("Too small or not actively traded to act on" if ctx.get("price") else "No listed price found for the target")
+    if len(ctx.get("history") or []) and len(ctx["history"]) < 90 and "activist" not in kinds:
+        label = "Weak"
+        reasons.append("Recent listing — early 13Ds are founders and IPO investors reporting initial stakes")
     if rec["amendment"] and prior is not None and pct <= prior + 0.5 and "activist" not in kinds:
         label = "Weak" if label == "Notable" else label
         reasons.append("Stake unchanged or lower than last filing")
