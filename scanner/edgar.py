@@ -148,7 +148,10 @@ def parse_form4(xml_bytes, adsh="", filed=""):
     if root.tag != "ownershipDocument":
         return []
     issuer = root.find("issuer")
-    company = {"cik": _t(issuer, "issuerCik").lstrip("0"), "name": _t(issuer, "issuerName"), "ticker": _t(issuer, "issuerTradingSymbol").upper()}
+    ticker = _t(issuer, "issuerTradingSymbol").upper().strip()
+    if ticker in ("N/A", "NA", "NONE", "N.A.", "-", "--") or len(ticker) > 8:
+        ticker = ""                                         # the filer left it blank; the SEC's company record fills it in later
+    company = {"cik": _t(issuer, "issuerCik").lstrip("0"), "name": _t(issuer, "issuerName"), "ticker": ticker}
     foot = {f.get("id"): re.sub(r"\s+", " ", "".join(f.itertext())).strip() for f in root.iter("footnote")}
     owners = []
     for ro in root.findall("reportingOwner"):

@@ -108,15 +108,17 @@ def cap_tier(market_cap):
 
 def context(ticker, cik):
     """Everything the scorer and the phone page want to know about the company right now."""
+    facts = company_facts(cik) if cik else {}
+    if not ticker and facts.get("tickers"):
+        ticker = facts["tickers"][0]
     hist = price_history(ticker) if ticker else []
     now = hist[-1][1] if hist else None
     shares = shares_outstanding(cik) if cik else None
-    cap = (now * shares) if (now and shares) else yahoo_cap(ticker)
-    facts = company_facts(cik) if cik else {}
+    cap = (now * shares) if (now and shares) else (yahoo_cap(ticker) if ticker else None)
     hi = max((c for _, c in hist), default=None)
     lo = min((c for _, c in hist), default=None)
     return {
-        "price": now, "as_of": hist[-1][0].isoformat() if hist else None,
+        "ticker": ticker, "price": now, "as_of": hist[-1][0].isoformat() if hist else None,
         "chg_30d": change(hist, 30), "chg_90d": change(hist, 90), "chg_1y": change(hist, 365),
         "high_52w": hi, "low_52w": lo, "off_high": (now / hi - 1.0) if (now and hi) else None,
         "shares_out": shares, "market_cap": cap, "tier": cap_tier(cap),

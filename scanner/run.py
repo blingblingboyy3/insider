@@ -126,6 +126,8 @@ def main():
         sc = score.score_company(grp, ctx, today)
         if not sc:
             continue
+        if not comp["ticker"] and ctx.get("ticker"):
+            comp = dict(comp, ticker=ctx["ticker"])
         entry = {"ticker": comp["ticker"], "name": comp["name"], "cik": comp["cik"], "updated": today.isoformat(), "ctx": {k: v for k, v in ctx.items() if k != "history"},
                  "spark": ctx.get("history", [])[-90:], "score": sc}
         companies[key] = entry
