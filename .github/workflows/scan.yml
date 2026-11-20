@@ -1,7 +1,7 @@
 name: scan
 on:
   schedule:
-    - cron: "4,14,24,34,44,54 * * * *"   # off the :00/:10 marks, which GitHub runs late
+    - cron: "5,15,25,35,45,55 * * * *"   # off-peak minutes; GitHub runs the :00/:10 slots late
   workflow_dispatch:
     inputs:
       days:
