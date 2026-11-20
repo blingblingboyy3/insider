@@ -47,9 +47,29 @@ def subscriptions(repo, token):
     return subs
 
 
+def private_key():
+    """The VAPID private key from the secret, repaired if the paste lost its line breaks or header."""
+    raw = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
+    if not raw:
+        return ""
+    body = re.sub(r"-----(BEGIN|END)[A-Z ]*PRIVATE KEY-----", " ", raw)
+    body = re.sub(r"\s+", "", body)
+    if not body:
+        return ""
+    import base64
+    try:
+        der = base64.b64decode(body + "=" * (-len(body) % 4))
+    except Exception:  # noqa: BLE001
+        return raw
+    if len(der) == 32:                                    # a raw 32-byte EC key was pasted instead of a PEM
+        return base64.urlsafe_b64encode(der).decode().rstrip("=")
+    lines = [body[i:i + 64] for i in range(0, len(body), 64)]
+    return "-----BEGIN PRIVATE KEY-----\n" + "\n".join(lines) + "\n-----END PRIVATE KEY-----\n"
+
+
 def send(alert, repo=None, token=None, dry=False):
     """Push one alert to every device. Returns how many were delivered."""
-    key = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
+    key = private_key()
     subs = subscriptions(repo, token)
     if not subs:
         print("no devices subscribed yet")
