@@ -12,7 +12,7 @@ from datetime import date
 from edgar import ARCHIVE, SEARCH, get
 
 PASSIVE = r"\b(vanguard|blackrock|state street|fidelity|fmr|geode|invesco|northern trust|dimensional|t\. ?rowe|capital research|wellington|jpmorgan chase|bank of america|morgan stanley|goldman sachs asset|ubs group|allianz|schwab|nuveen|franklin|principal|prudential|janus|macquarie|amundi|norges|susquehanna|citadel advisors|millennium|two sigma|renaissance|d\. ?e\. ?shaw|jane street|point72)\b"
-ACTIVISTS = r"\b(elliott|starboard|icahn|third point|pershing|trian|jana|engaged capital|ancora|land & buildings|sachem head|corvex|value ?act|valueact|legion partners|mantle ridge|politan|irenic|browning west|impactive|saba|glenview|hudson bay|engine no|cevian|palliser|anson|lion point|scion|kimmeridge|bluescape|hg vora|oasis management|silver point|carl c\. icahn|blackwells|barington|voss capital|privet|cannell|driver management)\b"
+ACTIVISTS = r"\b(elliott|starboard|icahn|third point|pershing|trian|jana|engaged capital|ancora|land & buildings|sachem head|corvex|value ?act|valueact|legion partners|mantle ridge|politan|irenic|browning west|impactive|saba|glenview|hudson bay|engine no|engine capital|cevian|palliser|anson|lion point|scion|kimmeridge|bluescape|hg vora|oasis management|silver point|carl c\. icahn|blackwells|barington|voss capital|privet|cannell|driver management|carronade|pale fire|h partners|marcato|hestia|gamco|gabelli|praesidium|mill road|kanen|180 degree|macellum|caligan|stadium capital|mangrove|kerrisdale|shah capital|murchinson|jcp investment|ides capital|leonite|arex|rubric|bulldog investors|phillip goldstein|legion|sarissa|biotechnology value fund|bvf|cannae|starboard value|mason capital|standard general|hudson executive|north run|hayman|muddy waters|spruce point|citron|coliseum capital|nokomis|lakewood|whitebox|owl creek|sessa|altai|cove street|boothbay|redwood capital|rhino|rubric|aristeia|contrarius|teton|polar asset|d\. ?e\. ?shaw|soroban|maverick|farallon|steel partners|gamco|cove|bandera|riposte|22nw|north star|edenbrook|loeb|ackman|peltz|jeffrey smith|singer)\b"
 
 
 def recent_13d(since, until=None, max_pages=10):
@@ -196,8 +196,8 @@ def score_13d(rec, ctx, prior=None):
     pts["how"] = 0
     how_text = funds + " " + purpose
     deal = re.search(r"in connection with|pursuant to (?:the|a|an) (?:merger|business combination|initial public offering|ipo|agreement and plan|securities purchase|subscription|exchange|conversion|reorgani[sz]ation|underwriting|private placement|registered direct|plan of)|as (?:compensation|consideration)|founder|restricted shares|upon (?:the )?(?:closing|consummation|conversion|exercise)|preferred (?:stock|shares)|warrants?|convertible|underwriter|placement agent|de-?spac|\bspac\b|debt conversion|loan", how_text)
-    bought = re.search(r"open[- ]market|(?:purchased|bought|acquired) [^.]{0,80}(?:in (?:the )?open[- ]market|brokerage|on the (?:nasdaq|nyse|new york stock exchange|exchange))|working capital of the reporting|funds of the reporting|personal funds|margin", how_text)
-    if deal and not bought:
+    bought = re.search(r"open[- ]market|brokerage transactions?|ordinary brokerage|personal funds", how_text)
+    if deal and not (bought and not re.search(r"in connection with", how_text)):
         pts["how"] = -30
         reasons.append("Shares came from a deal (IPO, merger, financing, compensation or conversion) rather than open-market buying — this is paperwork, not a bet")
     elif bought:
